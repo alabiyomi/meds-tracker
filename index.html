@@ -5,17 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Medication Tracker</title>
 
-<!-- Privacy + security (good for health data on GitHub Pages) -->
+<!-- Privacy + security (allow inline script so buttons work) -->
 <meta name="robots" content="noindex, nofollow">
 <meta http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self'; base-uri 'self'; form-action 'self';">
+      content="default-src 'self';
+               img-src 'self' data:;
+               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+               font-src https://fonts.gstatic.com data:;
+               script-src 'self' 'unsafe-inline';
+               connect-src 'self';
+               base-uri 'self';
+               form-action 'self';">
 
 <!-- PWA meta -->
 <meta name="theme-color" content="#0b1220">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<!-- Icons / Manifest (ensure these files exist at repo root or adjust paths) -->
+<!-- Icons / Manifest -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-256.png">
 <link rel="icon" href="icon-256.png"/>
@@ -44,10 +51,9 @@
 
     --space-1:6px; --space-2:10px; --space-3:14px; --space-4:18px; --space-5:24px;
 
-    /* Section tint anchors */
+    /* Section tints */
     --sec-form:#8b5cf6;     /* violet */
     --sec-entries:#14b8a6;  /* teal */
-    --sec-charts:#f59e0b;   /* amber */
     --sec-summary:#38bdf8;  /* sky */
 
     /* Advertise dark+light to Safari; dynamic viewport fallback */
@@ -111,7 +117,7 @@
     background:#101b31; border:1px solid #223353; color:#d6d9ff;
   }
 
-  /* Subtle per-section background / border tints */
+  /* Per-section background / border tints */
   .section-form{
     background:
       linear-gradient(180deg, color-mix(in srgb, var(--sec-form) 12%, transparent), transparent),
@@ -124,36 +130,46 @@
       var(--md-sys-color-surface);
     border-color: color-mix(in srgb, var(--sec-entries) 26%, var(--md-sys-color-outline));
   }
-  .section-charts{
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--sec-charts) 10%, transparent), transparent),
-      var(--md-sys-color-surface);
-    border-color: color-mix(in srgb, var(--sec-charts) 24%, var(--md-sys-color-outline));
-  }
   .section-summary{
     background:
       linear-gradient(180deg, color-mix(in srgb, var(--sec-summary) 12%, transparent), transparent),
       var(--md-sys-color-surface);
     border-color: color-mix(in srgb, var(--sec-summary) 26%, var(--md-sys-color-outline));
   }
-  /* Match chip tint to section */
   .section-form[data-section]::before{ background:color-mix(in srgb, var(--sec-form) 18%, #0b1220); border-color:color-mix(in srgb, var(--sec-form) 40%, #162236); color:#efe9ff; }
   .section-entries[data-section]::before{ background:color-mix(in srgb, var(--sec-entries) 18%, #0b1220); border-color:color-mix(in srgb, var(--sec-entries) 40%, #162236); color:#d9fffb; }
-  .section-charts[data-section]::before{ background:color-mix(in srgb, var(--sec-charts) 18%, #0b1220); border-color:color-mix(in srgb, var(--sec-charts) 40%, #162236); color:#fff1d6; }
   .section-summary[data-section]::before{ background:color-mix(in srgb, var(--sec-summary) 18%, #0b1220); border-color:color-mix(in srgb, var(--sec-summary) 40%, #162236); color:#e6f6ff; }
 
   .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; row-gap:6px; }
   .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 
+  /* GRID */
+  .row{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; }
+  .row > *{ min-width:0; }            /* prevents Safari grid overflow */
+  .field{ display:block; position:relative; min-width:0; } /* anchor for suggestion dropdowns */
+  .col-3{grid-column: span 3;}
+  .col-4{grid-column: span 4;}
+  .col-6{grid-column: span 6;}
+  .col-8{grid-column: span 8;}
+  .col-12{grid-column: span 12;}
+
   /* Inputs */
-  .field{ display:block; position:relative; } /* anchor for suggestion dropdowns */
   .field label{ display:block; font-size:.92rem; color:var(--md-sys-color-secondary); margin-bottom:6px; }
   .input, select, textarea{
-    width:100%; padding:12px 12px;
+    width:100%; max-width:100%;
+    padding:12px 12px;
     border:1px solid var(--md-sys-color-outline);
     border-radius:12px; background:#0d172b; color:var(--md-sys-color-on-surface);
     outline:none; transition:border .15s, box-shadow .15s, background .15s;
     font-size:16px; /* no iOS zoom */
+    min-height:46px;                /* consistent control height */
+  }
+  /* Normalize date/time controls in Safari */
+  input[type="date"].input,
+  input[type="time"].input{
+    font-variant-numeric: tabular-nums;
+    padding:12px 12px;
+    line-height:1.2;
   }
   .input:focus, select:focus, textarea:focus{
     border-color:var(--md-sys-color-primary);
@@ -165,13 +181,6 @@
     box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-error) 28%, transparent) !important;
     background:#261217 !important;
   }
-
-  .row{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; }
-  .col-3{grid-column: span 3;}
-  .col-4{grid-column: span 4;}
-  .col-6{grid-column: span 6;}
-  .col-8{grid-column: span 8;}
-  .col-12{grid-column: span 12;}
 
   /* Buttons */
   .btn{
@@ -223,9 +232,7 @@
     border-radius:12px; box-shadow: var(--shadow-2); z-index: 8;
   }
   .suggest-item{ padding:10px 12px; cursor:pointer; color:#e5e7eb; }
-  .suggest-item:hover,.suggest-item[aria-selected="true"]{
-    background:#122340;
-  }
+  .suggest-item:hover,.suggest-item[aria-selected="true"]{ background:#122340; }
   .suggest-empty{ padding:10px 12px; color:#98a3b6; }
 
   /* Modal (Template Manager) */
@@ -426,21 +433,6 @@
       </div>
     </section>
 
-    <!-- Charts -->
-    <section class="card section-charts" aria-labelledby="h-charts" data-section="Charts" style="margin-top:16px;">
-      <h2 id="h-charts" class="sr-only">Charts</h2>
-      <div class="row">
-        <div class="col-6"><h3>Daily Relief Trend (avg)</h3><canvas id="dailyReliefTrend" height="220"></canvas></div>
-        <div class="col-6"><h3>Relief by Strain (token avg)</h3><canvas id="reliefByStrain" height="220"></canvas></div>
-        <div class="col-6"><h3>Relief by Method (avg)</h3><canvas id="reliefByMethod" height="220"></canvas></div>
-        <div class="col-6"><h3>Relief by Reason (token avg)</h3><canvas id="reliefByReason" height="220"></canvas></div>
-        <div class="col-6"><h3>Usage by Method</h3><canvas id="methodShare" height="220"></canvas></div>
-        <div class="col-6"><h3>Usage by Form</h3><canvas id="formShare" height="220"></canvas></div>
-        <div class="col-6"><h3>Side Effects Frequency (top 10)</h3><canvas id="sideEffectsFreq" height="220"></canvas></div>
-        <div class="col-6"><h3>Environment Frequency</h3><canvas id="environmentFreq" height="220"></canvas></div>
-      </div>
-    </section>
-
     <!-- Doctor Summary -->
     <section class="card section-summary" aria-labelledby="h-summary" data-section="Doctor Summary" style="margin-top:16px;">
       <h2 id="h-summary" class="sr-only">Doctor Summary</h2>
@@ -509,8 +501,6 @@
     </div>
   </div>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 <script>
 /* ---------- Keys & Globals ---------- */
 const KEY="mmj_entries_v1", UI_KEY="mmj_ui_state_v1", DRAFT_KEY="mmj_draft_v1";
@@ -520,7 +510,7 @@ const statusPill=$("#status"), editingBadge=$("#editingBadge");
 const undoToast=$("#undoToast"), undoBtn=$("#undoBtn");
 let editingId=null, undoTimer=null, lastDeleted=null;
 
-/* Debounce helper (for smoother iPhone typing + chart rebuilds) */
+/* Debounce helper (for smoother iPhone typing) */
 const debounce = (fn, ms=160) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
 
 /* Safe unique id */
@@ -828,51 +818,224 @@ function renderTable(){
     `<span class="pill">Avg THC (mg): ${avgTHC}</span>`;
 }
 
-/* ---------- Charts (filter-aware) ---------- */
-function groupAvgReliefByTokens(entries, field){ const m={}; for(const e of entries){ if(e.relief==null) continue; tokenize(e[field]).forEach(t=>{ (m[t]||(m[t]={sum:0,n:0})).sum+=e.relief; m[t].n++; }); } const labels=Object.keys(m); const data=labels.map(k=>+(m[k].sum/m[k].n).toFixed(2)); return {labels,data}; }
-function groupAvgReliefByField(entries, field){ const m={}; for(const e of entries){ if(e.relief==null) continue; const k=e[field]; if(!k) continue; (m[k]||(m[k]={sum:0,n:0})).sum+=e.relief; m[k].n++; } const labels=Object.keys(m); const data=labels.map(k=>+(m[k].sum/m[k].n).toFixed(2)); return {labels,data}; }
-function groupCountByTokens(entries, field, topN=null){ const m={}; for(const e of entries){ tokenize(e[field]).forEach(t=>{ m[t]=(m[t]||0)+1; }); } let pairs=Object.entries(m).sort((a,b)=>b[1]-a[1]); if(topN) pairs=pairs.slice(0,topN); return {labels:pairs.map(p=>p[0]), data:pairs.map(p=>p[1])}; }
-function groupCountByField(entries, field){ const m={}; for(const e of entries){ const k=e[field]; if(k) m[k]=(m[k]||0)+1; } return {labels:Object.keys(m), data:Object.values(m)}; }
-function dailyAvgRelief(entries){ const m={}; for(const e of entries){ if(e.relief==null||!e.date) continue; (m[e.date]||(m[e.date]={sum:0,n:0})).sum+=e.relief; m[e.date].n++; } const dates=Object.keys(m).sort(); const data=dates.map(d=>+(m[d].sum/m[d].n).toFixed(2)); return {labels:dates, data}; }
-let chartDaily, chartReliefStrain, chartReliefMethod, chartReliefReason, chartMethod, chartForm, chartSideFx, chartEnv;
-function rebuildCharts(){
-  const entries=getFilteredEntries();
-  if(typeof window.Chart==="undefined") return;
-  const baseOpts={responsive:true,animation:{duration:250},parsing:false,maintainAspectRatio:false,plugins:{legend:{display:false}}};
-  const mk=(old,id,cfg)=>{ if(old) old.destroy(); return new Chart(document.getElementById(id), cfg); };
-  chartDaily = mk(chartDaily, "dailyReliefTrend", (()=>{
-    const {labels,data}=dailyAvgRelief(entries);
-    return {type:"line", data:{labels,datasets:[{label:"Avg Relief",data}]}, options:{...baseOpts, scales:{y:{beginAtZero:true}}}};
-  })());
-  chartReliefStrain = mk(chartReliefStrain,"reliefByStrain",(()=>{
-    const {labels,data}=groupAvgReliefByTokens(entries,"strain");
-    return {type:"bar", data:{labels,datasets:[{label:"Avg Relief",data}]}, options:{...baseOpts, scales:{y:{beginAtZero:true}}}};
-  })());
-  chartReliefMethod = mk(chartReliefMethod,"reliefByMethod",(()=>{
-    const {labels,data}=groupAvgReliefByField(entries,"method");
-    return {type:"bar", data:{labels,datasets:[{label:"Avg Relief",data}]}, options:{...baseOpts, scales:{y:{beginAtZero:true}}}};
-  })());
-  chartReliefReason = mk(chartReliefReason,"reliefByReason",(()=>{
-    const {labels,data}=groupAvgReliefByTokens(entries,"reason");
-    return {type:"bar", data:{labels,datasets:[{label:"Avg Relief",data}]}, options:{...baseOpts, scales:{y:{beginAtZero:true}}}};
-  })());
-  chartMethod = mk(chartMethod,"methodShare",(()=>{
-    const {labels,data}=groupCountByField(entries,"method");
-    return {type:"doughnut", data:{labels,datasets:[{label:"Sessions",data}]}, options:{...baseOpts, plugins:{legend:{position:"bottom"}}}};
-  })());
-  chartForm = mk(chartForm,"formShare",(()=>{
-    const {labels,data}=groupCountByField(entries,"form");
-    return {type:"doughnut", data:{labels,datasets:[{label:"Sessions",data}]}, options:{...baseOpts, plugins:{legend:{position:"bottom"}}}};
-  })());
-  chartSideFx = mk(chartSideFx,"sideEffectsFreq",(()=>{
-    const {labels,data}=groupCountByTokens(entries,"side_effects",10);
-    return {type:"bar", data:{labels,datasets:[{label:"Count",data}]}, options:{...baseOpts, indexAxis:"y", scales:{x:{beginAtZero:true}}}};
-  })());
-  chartEnv = mk(chartEnv,"environmentFreq",(()=>{
-    const {labels,data}=groupCountByTokens(entries,"environment");
-    return {type:"bar", data:{labels,datasets:[{label:"Count",data}]}, options:{...baseOpts, scales:{y:{beginAtZero:true}}}};
-  })());
+/* ---------- Doctor Summary ---------- */
+function filterByRange(entries, range){ if(range==="all") return entries; const days=Number(range)||30; const now=new Date(), cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-days); return entries.filter(e=>{ if(!e.date) return false; const [y,m,d]=e.date.split("-").map(Number); const dt=new Date(y,(m||1)-1,d||1); return dt>=cutoff; }); }
+function avg(a){ return a.length? a.reduce((x,y)=>x+y,0)/a.length : null; }
+function fmt(n,d=2){ return (n==null||isNaN(n))?"—":Number(n).toFixed(d); }
+function topList(mapObj,n=5,withAvg=false){ let arr=Array.isArray(mapObj)?mapObj:Object.entries(mapObj); arr.sort((a,b)=>b[1].count-a[1].count); arr=arr.slice(0,n); return arr.map(([k,v])=>withAvg?`• ${k}: ${v.count} (avg relief ${fmt(v.avg,2)})`:`• ${k}: ${v.count}`).join("\n"); }
+function generateDoctorSummary(range="30"){
+  const all=getEntries(), entries=filterByRange(all,range), total=entries.length;
+  const beforeVals=entries.filter(e=>e.before!=null).map(e=>e.before), afterVals=entries.filter(e=>e.after!=null).map(e=>e.after), reliefVals=entries.filter(e=>e.relief!=null).map(e=>e.relief);
+  const avgBefore=avg(beforeVals), avgAfter=avg(afterVals), avgRelief=avg(reliefVals);
+  const onsetAvg=avg(entries.filter(e=>e.onset!=null).map(e=>e.onset)), durationAvg=avg(entries.filter(e=>e.duration!=null).map(e=>e.duration));
+  const methodMap={}, formMap={}; for(const e of entries){ if(e.method){methodMap[e.method]=(methodMap[e.method]||0)+1;} if(e.form){formMap[e.form]=(formMap[e.form]||0)+1;} }
+  const strainStats={}, reasonStats={}, sideFx={};
+  for(const e of entries){
+    tokenize(e.strain).forEach(t=>{ (strainStats[t]||(strainStats[t]={count:0,reliefs:[]})).count++; if(e.relief!=null) strainStats[t].reliefs.push(e.relief); });
+    tokenize(e.reason).forEach(t=>{ (reasonStats[t]||(reasonStats[t]={count:0,reliefs:[]})).count++; if(e.relief!=null) reasonStats[t].reliefs.push(e.relief); });
+    tokenize(e.side_effects).forEach(t=>{ sideFx[t]=(sideFx[t]||0)+1; });
+  }
+  const strainSummary=Object.fromEntries(Object.entries(strainStats).map(([k,v])=>[k,{count:v.count,avg:avg(v.reliefs)}]));
+  const reasonSummary=Object.fromEntries(Object.entries(reasonStats).map(([k,v])=>[k,{count:v.count,avg:avg(v.reliefs)}]));
+  const sideFxTop=Object.entries(sideFx).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>`• ${k}: ${v}`).join("\n");
+  let dateRangeTxt="All time"; if(range!=="all"&&entries.length){ const ds=entries.map(e=>e.date).sort(); dateRangeTxt=`${ds[0]} → ${ds[ds.length-1]}`; }
+  const lines=[]; lines.push(`Medication Usage Summary (${dateRangeTxt})`);
+  lines.push(`Total sessions: ${total}`);
+  lines.push(`Average symptom scores: before ${fmt(avgBefore,2)} → after ${fmt(avgAfter,2)} (avg relief ${fmt(avgRelief,2)})`);
+  lines.push(`Average onset: ${fmt(onsetAvg,1)} min; Average duration: ${fmt(durationAvg,1)} h`);
+  lines.push(""); lines.push("Most-used methods:"); lines.push(topList(Object.entries(methodMap).reduce((a,[k,c])=>{a[k]={count:c};return a;},{}),5,false)||"• —");
+  lines.push(""); lines.push("Most-used forms:"); lines.push(topList(Object.entries(formMap).reduce((a,[k,c])=>{a[k]={count:c};return a;},{}),5,false)||"• —");
+  lines.push(""); lines.push("Top strains (by token):"); lines.push(topList(Object.entries(strainSummary),5,true)||"• —");
+  lines.push(""); lines.push("Top reasons/symptoms (by token):"); lines.push(topList(Object.entries(reasonSummary),5,true)||"• —");
+  lines.push(""); lines.push("Most common side effects (tokens):"); lines.push(sideFxTop||"• —");
+  lines.push(""); lines.push("Notes:"); lines.push("• This summary aggregates self-reported data. Dosage strings aren’t parsed numerically."); lines.push("• Relief = Before – After (positive means improvement).");
+  return lines.join("\n");
 }
+
+/* ---------- Init & Events ---------- */
+document.addEventListener("DOMContentLoaded", ()=>{
+  // Form element wrapper
+  const formWrap=document.createElement("form"); formWrap.id="trackerForm"; formWrap.addEventListener("submit", e=>e.preventDefault());
+  const formSection=document.getElementById("formGrid"); formSection.parentNode.insertBefore(formWrap, formSection); formWrap.appendChild(formSection);
+
+  // Suggestions
+  attachSuggest("strain", ()=>getRecentTokens("strain"));
+  attachSuggest("thc_cbd", ()=>getRecentTokens("thc_cbd"));
+  attachSuggest("dose", ()=>getRecentTokens("dose"));
+  attachSuggest("reason", ()=>getRecentTokens("reason"));
+  attachSuggest("environment", ()=>getRecentTokens("environment"));
+  attachSuggest("side_effects", ()=>getRecentTokens("side_effects"));
+
+  ensureTodayDefaults();
+  attachErrorClearing();
+  $("#trackerForm").addEventListener("input", ()=>{ saveDraft(); updateReliefPreview(); });
+  $("#before").addEventListener("input", updateReliefPreview);
+  $("#after").addEventListener("input", updateReliefPreview);
+
+  loadUIState();
+  try{ const s=getSettings(); $("#dupPrevent").checked=!!s.dupPrevent; $("#exportFiltered").checked=!!s.exportFiltered; }catch{}
+  loadDraft();
+
+  renderPinnedTemplates();
+  renderTable();
+
+  // Save / Update
+  $("#saveBtn").addEventListener("click", ()=>{
+    if(!validateForm()) return;
+    const data=readForm();
+    const s=getSettings();
+    if (s.dupPrevent && isNearDuplicate(data)){
+      const ok=confirm("This looks like a near-duplicate (same date/strain/method within ~15 min). Save anyway?");
+      if(!ok){ setStatus("Save canceled","pill warn"); return; }
+    }
+    if(editingId){
+      const entries=getEntries(); const idx=entries.findIndex(x=>x.id===editingId);
+      if(idx>=0){ data.id=editingId; data.createdAt=entries[idx].createdAt ?? data.createdAt; entries[idx]=data; setEntries(entries); setStatus("Updated ✓","pill ok"); }
+      else{ const arr=getEntries(); arr.push(data); setEntries(arr); setStatus("Saved ✓ (entry not found; added new)","pill warn"); }
+      endEdit();
+    } else {
+      const entries=getEntries(); entries.push(data); setEntries(entries); setStatus("Saved ✓","pill ok");
+    }
+    clearDraft();
+    renderTable();
+    clearForm(); ensureTodayDefaults();
+    saveUIState();
+  });
+
+  $("#newBtn").addEventListener("click", ()=>{ clearForm(); ensureTodayDefaults(); setStatus("Form cleared","pill"); });
+
+  // Table actions
+  $("#table").addEventListener("click", (e)=>{
+    const btn=e.target.closest("button"); if(!btn) return;
+    const id=btn.dataset.id, act=btn.dataset.act;
+    const entries=getEntries(); const idx=entries.findIndex(x=>x.id===id); if(idx<0) return;
+    if(act==="edit"){ startEdit(entries[idx]); }
+    if(act==="dup"){ const copy={...entries[idx]}; delete copy.id; endEdit(); fillForm(copy); setStatus("Loaded copy — edit and Save to add","pill"); }
+    if(act==="del"){
+      if(confirm("Delete this entry?")){
+        lastDeleted=entries[idx]; entries.splice(idx,1); setEntries(entries);
+        renderTable(); setStatus("Deleted","pill bad"); if(editingId===id) endEdit(); showUndoToast();
+      }
+    }
+  });
+
+  // Filters (debounced for smoother typing)
+  const handleFilters = debounce(()=>{ saveUIState(); renderTable(); }, 160);
+  ["search","filterMethod","filterForm","filterFrom","filterTo","sortBy"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", handleFilters);
+  });
+  $("#clearFiltersBtn").addEventListener("click", ()=>{ $("#search").value=""; $("#filterMethod").value=""; $("#filterForm").value=""; $("#filterFrom").value=""; $("#filterTo").value=""; handleFilters(); });
+
+  // Export / Import (with checksum)
+  $("#exportJsonBtn").addEventListener("click", ()=>{
+    const useFiltered = $("#exportFiltered").checked;
+    const entries = useFiltered? getFilteredEntries() : getEntries();
+    const canon = JSON.stringify(entries);
+    const checksum = crc32(canon).toString(16).padStart(8,"0");
+    const wrapper = { type:"mmj-export-v2", createdAt: Date.now(), count: entries.length, checksum, entries };
+    download(`meds_entries_${localFileDate()}${useFiltered?"_filtered":""}.json`, JSON.stringify(wrapper,null,2), "application/json");
+  });
+  // CSV Export (respects "Export filtered only")
+  $("#exportCsvBtn").addEventListener("click", ()=>{
+    const useFiltered = $("#exportFiltered").checked;
+    theEntries = useFiltered ? getFilteredEntries() : getEntries();
+    const csv = toCSV(theEntries);
+    download(`meds_entries_${localFileDate()}${useFiltered ? "_filtered" : ""}.csv`, csv, "text/csv");
+  });
+
+  $("#importJson").addEventListener("change", async (ev)=>{
+    const f=ev.target.files?.[0]; if(!f) return;
+    try{
+      const text = await f.text();
+      let data = JSON.parse(text);
+      let incomingArr = null;
+      if (Array.isArray(data)){ incomingArr = data; }
+      else if (data && Array.isArray(data.entries)){
+        const canon = JSON.stringify(data.entries);
+        const calc = crc32(canon).toString(16).padStart(8,"0");
+        if (data.checksum && data.checksum !== calc){
+          throw new Error("Checksum mismatch. File may be corrupted or partially synced.");
+        }
+        incomingArr = data.entries;
+      } else { throw new Error("Invalid JSON"); }
+      const existing = getEntries();
+      const map = new Map(existing.map(e=>[e.id,e]));
+      for(const e of incomingArr){ if(!e.id) e.id = uid(); map.set(e.id, e); }
+      setEntries(Array.from(map.values()));
+      renderTable(); setStatus("Imported ✓","pill ok"); endEdit();
+    }catch(err){ console.error(err); setStatus(err?.message || "Import failed","pill bad"); }
+    finally{ ev.target.value=""; }
+  });
+
+  $("#resetBtn").addEventListener("click", ()=>{ if(confirm("This will delete ALL entries in this browser. Continue?")){ localStorage.removeItem(KEY); renderTable(); setStatus("All data erased","pill bad"); endEdit(); clearDraft(); } });
+
+  // Doctor Summary
+  $("#genSummaryBtn").addEventListener("click", ()=>{ const range=$("#summaryRange").value; $("#summaryText").value=generateDoctorSummary(range); saveUIState(); });
+  $("#copySummaryBtn").addEventListener("click", async ()=>{ const txt=$("#summaryText").value||""; try{ await navigator.clipboard.writeText(txt); setStatus("Summary copied ✓","pill ok"); }catch{ setStatus("Copy failed","pill bad"); }});
+  $("#downloadSummaryBtn").addEventListener("click", ()=>{ const txt=$("#summaryText").value||""; const range=$("#summaryRange").value; download(`doctor_summary_${range==='all'?'all':range+'d'}.txt`, txt, "text/plain"); });
+
+  // Template modal
+  $("#manageTemplatesBtn").addEventListener("click", openTplModal);
+  $("#tplCloseBtn").addEventListener("click", closeTplModal);
+  $("#tplNewBtn").addEventListener("click", ()=>{ loadTemplateEditor(null); showTplEditView(); });
+  $("#tplCancelEditBtn").addEventListener("click", ()=>{ loadTemplateEditor(null); showTplListView(); });
+  $("#tplSaveBtn").addEventListener("click", ()=>{
+    const data = readTemplateEditor();
+    if(!data.name){ $("#tplName").classList.add("error"); $("#tplName").setAttribute("aria-invalid","true"); $("#tplName").focus(); return; }
+    const arr = getTemplates();
+    if(tplEditingId){
+      const idx = arr.findIndex(t=>t.id===tplEditingId);
+      if(idx>=0){ arr[idx] = {...arr[idx], ...data, id:tplEditingId}; setTemplates(arr); }
+    }else{
+      arr.push({ id: uid(), name:data.name, pinned:!!data.pinned, fields:data.fields, createdAt:Date.now() });
+      setTemplates(arr);
+    }
+    renderTplList(); renderPinnedTemplates(); showTplListView(); setStatus("Template saved ✓","pill ok");
+  });
+  $("#tplList").addEventListener("click",(e)=>{
+    const btn=e.target.closest("button[data-act]"); if(!btn) return;
+    const id=btn.dataset.id, act=btn.dataset.act;
+    const arr=getTemplates(); const idx=arr.findIndex(t=>t.id===id); if(idx<0) return;
+    if(act==="apply"){ applyTemplate(arr[idx]); closeTplModal(); }
+    if(act==="edit"){ tplEditingId=id; loadTemplateEditor(arr[idx]); showTplEditView(); }
+    if(act==="pin"){ arr[idx].pinned = !arr[idx].pinned; setTemplates(arr); renderTplList(); renderPinnedTemplates(); }
+    if(act==="del"){
+      if(confirm("Delete this template?")){ arr.splice(idx,1); setTemplates(arr); renderTplList(); renderPinnedTemplates(); setStatus("Template deleted","pill bad"); }
+    }
+  });
+  // Modal UX: start closed, backdrop click & Esc to close
+  closeTplModal();
+  $("#tplModal").addEventListener("click", (e)=>{ if (e.target.id === "tplModal") closeTplModal(); });
+  document.addEventListener("keydown", (e)=>{ const isOpen=!$("#tplModal").hidden; if (e.key === "Escape" && isOpen) closeTplModal(); });
+
+  // Settings toggles
+  $("#dupPrevent").addEventListener("change",(e)=>{ const s=getSettings(); s.dupPrevent=e.target.checked; saveSettings(s); });
+  $("#exportFiltered").addEventListener("change",(e)=>{ const s=getSettings(); s.exportFiltered=e.target.checked; saveSettings(s); });
+
+  // Shortcuts
+  document.addEventListener("keydown",(e)=>{
+    const isInput=["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName);
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){ e.preventDefault(); $("#saveBtn").click(); }
+    if(!isInput && e.key==="/"){ e.preventDefault(); $("#search").focus(); }
+  });
+
+  // Unload guard
+  window.addEventListener("beforeunload",(e)=>{ const draft=localStorage.getItem(DRAFT_KEY); if(editingId || (draft && draft!=="{}")){ e.preventDefault(); e.returnValue=""; } });
+
+  // Service worker registration (PWA / offline)
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=> {
+      navigator.serviceWorker.register("./sw.js").catch(()=>{ /* ignore */ });
+    });
+  }
+});
+
+/* ---------- Undo Delete ---------- */
+function showUndoToast(){ undoToast.style.display="flex"; clearTimeout(undoTimer); undoTimer=setTimeout(()=>{ undoToast.style.display="none"; lastDeleted=null; },6000); }
+undoBtn.addEventListener("click", ()=>{ if(lastDeleted){ const entries=getEntries(); entries.push(lastDeleted); setEntries(entries); renderTable(); setStatus("Restored ✓","pill ok"); lastDeleted=null; undoToast.style.display="none"; clearTimeout(undoTimer); }});
+
+/* ---------- Error clearing for required fields ---------- */
+function attachErrorClearing(){ requiredFields.forEach(sel=>{ const el=$(sel); const evt=(el.tagName==="SELECT")?"change":"input"; el.addEventListener(evt, ()=>{ el.classList.remove("error"); el.removeAttribute("aria-invalid"); }); }); }
 
 /* ---------- CSV/JSON Export ---------- */
 function toCSV(arr){ const entries=arr||getEntries(); const cols=["date","time","strain","thc_cbd","form","method","dose","reason","before","after","relief","onset","duration","side_effects","environment","notes"]; const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`; const lines=[cols.join(",")]; for(const e of entries){ lines.push(cols.map(k=>esc(e[k])).join(",")); } return lines.join("\n"); }
@@ -985,245 +1148,6 @@ function readTemplateEditor(){
     }
   };
 }
-
-/* ---------- Doctor Summary ---------- */
-function filterByRange(entries, range){ if(range==="all") return entries; const days=Number(range)||30; const now=new Date(), cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-days); return entries.filter(e=>{ if(!e.date) return false; const [y,m,d]=e.date.split("-").map(Number); const dt=new Date(y,(m||1)-1,d||1); return dt>=cutoff; }); }
-function avg(a){ return a.length? a.reduce((x,y)=>x+y,0)/a.length : null; }
-function fmt(n,d=2){ return (n==null||isNaN(n))?"—":Number(n).toFixed(d); }
-function topList(mapObj,n=5,withAvg=false){ let arr=Array.isArray(mapObj)?mapObj:Object.entries(mapObj); arr.sort((a,b)=>b[1].count-a[1].count); arr=arr.slice(0,n); return arr.map(([k,v])=>withAvg?`• ${k}: ${v.count} (avg relief ${fmt(v.avg,2)})`:`• ${k}: ${v.count}`).join("\n"); }
-function generateDoctorSummary(range="30"){
-  const all=getEntries(), entries=filterByRange(all,range), total=entries.length;
-  const beforeVals=entries.filter(e=>e.before!=null).map(e=>e.before), afterVals=entries.filter(e=>e.after!=null).map(e=>e.after), reliefVals=entries.filter(e=>e.relief!=null).map(e=>e.relief);
-  const avgBefore=avg(beforeVals), avgAfter=avg(afterVals), avgRelief=avg(reliefVals);
-  const onsetAvg=avg(entries.filter(e=>e.onset!=null).map(e=>e.onset)), durationAvg=avg(entries.filter(e=>e.duration!=null).map(e=>e.duration));
-  const methodMap={}, formMap={}; for(const e of entries){ if(e.method){methodMap[e.method]=(methodMap[e.method]||0)+1;} if(e.form){formMap[e.form]=(formMap[e.form]||0)+1;} }
-  const strainStats={}, reasonStats={}, sideFx={};
-  for(const e of entries){
-    tokenize(e.strain).forEach(t=>{ (strainStats[t]||(strainStats[t]={count:0,reliefs:[]})).count++; if(e.relief!=null) strainStats[t].reliefs.push(e.relief); });
-    tokenize(e.reason).forEach(t=>{ (reasonStats[t]||(reasonStats[t]={count:0,reliefs:[]})).count++; if(e.relief!=null) reasonStats[t].reliefs.push(e.relief); });
-    tokenize(e.side_effects).forEach(t=>{ sideFx[t]=(sideFx[t]||0)+1; });
-  }
-  const strainSummary=Object.fromEntries(Object.entries(strainStats).map(([k,v])=>[k,{count:v.count,avg:avg(v.reliefs)}]));
-  const reasonSummary=Object.fromEntries(Object.entries(reasonStats).map(([k,v])=>[k,{count:v.count,avg:avg(v.reliefs)}]));
-  const sideFxTop=Object.entries(sideFx).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>`• ${k}: ${v}`).join("\n");
-  let dateRangeTxt="All time"; if(range!=="all"&&entries.length){ const ds=entries.map(e=>e.date).sort(); dateRangeTxt=`${ds[0]} → ${ds[ds.length-1]}`; }
-  const lines=[]; lines.push(`Medication Usage Summary (${dateRangeTxt})`);
-  lines.push(`Total sessions: ${total}`);
-  lines.push(`Average symptom scores: before ${fmt(avgBefore,2)} → after ${fmt(avgAfter,2)} (avg relief ${fmt(avgRelief,2)})`);
-  lines.push(`Average onset: ${fmt(onsetAvg,1)} min; Average duration: ${fmt(durationAvg,1)} h`);
-  lines.push(""); lines.push("Most-used methods:"); lines.push(topList(Object.entries(methodMap).reduce((a,[k,c])=>{a[k]={count:c};return a;},{}),5,false)||"• —");
-  lines.push(""); lines.push("Most-used forms:"); lines.push(topList(Object.entries(formMap).reduce((a,[k,c])=>{a[k]={count:c};return a;},{}),5,false)||"• —");
-  lines.push(""); lines.push("Top strains (by token):"); lines.push(topList(Object.entries(strainSummary),5,true)||"• —");
-  lines.push(""); lines.push("Top reasons/symptoms (by token):"); lines.push(topList(Object.entries(reasonSummary),5,true)||"• —");
-  lines.push(""); lines.push("Most common side effects (tokens):"); lines.push(sideFxTop||"• —");
-  lines.push(""); lines.push("Notes:"); lines.push("• This summary aggregates self-reported data. Dosage strings aren’t parsed numerically."); lines.push("• Relief = Before – After (positive means improvement).");
-  return lines.join("\n");
-}
-
-/* ---------- Charts helpers ---------- */
-function rebuildAll(){ renderTable(); rebuildCharts(); }
-
-/* ---------- Init & Events ---------- */
-document.addEventListener("DOMContentLoaded", ()=>{
-  // Form element wrapper
-  const formWrap=document.createElement("form"); formWrap.id="trackerForm"; formWrap.addEventListener("submit", e=>e.preventDefault());
-  const formSection=document.getElementById("formGrid"); formSection.parentNode.insertBefore(formWrap, formSection); formWrap.appendChild(formSection);
-
-  // Suggestions
-  attachSuggest("strain", ()=>getRecentTokens("strain"));
-  attachSuggest("thc_cbd", ()=>getRecentTokens("thc_cbd"));
-  attachSuggest("dose", ()=>getRecentTokens("dose"));
-  attachSuggest("reason", ()=>getRecentTokens("reason"));
-  attachSuggest("environment", ()=>getRecentTokens("environment"));
-  attachSuggest("side_effects", ()=>getRecentTokens("side_effects"));
-
-  ensureTodayDefaults();
-  attachErrorClearing();
-  $("#trackerForm").addEventListener("input", ()=>{ saveDraft(); updateReliefPreview(); });
-  $("#before").addEventListener("input", updateReliefPreview);
-  $("#after").addEventListener("input", updateReliefPreview);
-
-  loadUIState();
-  try{ const s=getSettings(); $("#dupPrevent").checked=!!s.dupPrevent; $("#exportFiltered").checked=!!s.exportFiltered; }catch{}
-  loadDraft();
-
-  renderPinnedTemplates();
-
-  // Lazy-initialize charts when they enter view
-  let chartsInitialized=false;
-  const chartIds=["dailyReliefTrend","reliefByStrain","reliefByMethod","reliefByReason","methodShare","formShare","sideEffectsFreq","environmentFreq"];
-  const io=new IntersectionObserver(entries=>{
-    for(const e of entries){
-      if(e.isIntersecting && !chartsInitialized){
-        rebuildCharts();
-        chartsInitialized=true;
-        io.disconnect();
-        break;
-      }
-    }
-  },{rootMargin:"200px"});
-  chartIds.forEach(id=>{ const el=document.getElementById(id); if(el) io.observe(el); });
-
-  // Initial paint: table only (charts wait for observer)
-  renderTable();
-
-  // Save / Update
-  $("#saveBtn").addEventListener("click", ()=>{
-    if(!validateForm()) return;
-    const data=readForm();
-    const s=getSettings();
-    if (s.dupPrevent && isNearDuplicate(data)){
-      const ok=confirm("This looks like a near-duplicate (same date/strain/method within ~15 min). Save anyway?");
-      if(!ok){ setStatus("Save canceled","pill warn"); return; }
-    }
-    if(editingId){
-      const entries=getEntries(); const idx=entries.findIndex(x=>x.id===editingId);
-      if(idx>=0){ data.id=editingId; data.createdAt=entries[idx].createdAt ?? data.createdAt; entries[idx]=data; setEntries(entries); setStatus("Updated ✓","pill ok"); }
-      else{ const arr=getEntries(); arr.push(data); setEntries(arr); setStatus("Saved ✓ (entry not found; added new)","pill warn"); }
-      endEdit();
-    } else {
-      const entries=getEntries(); entries.push(data); setEntries(entries); setStatus("Saved ✓","pill ok");
-    }
-    clearDraft();
-    renderTable(); if(chartsInitialized) rebuildCharts();
-    clearForm(); ensureTodayDefaults();
-    saveUIState();
-  });
-
-  $("#newBtn").addEventListener("click", ()=>{ clearForm(); ensureTodayDefaults(); setStatus("Form cleared","pill"); });
-
-  // Table actions
-  $("#table").addEventListener("click", (e)=>{
-    const btn=e.target.closest("button"); if(!btn) return;
-    const id=btn.dataset.id, act=btn.dataset.act;
-    const entries=getEntries(); const idx=entries.findIndex(x=>x.id===id); if(idx<0) return;
-    if(act==="edit"){ startEdit(entries[idx]); }
-    if(act==="dup"){ const copy={...entries[idx]}; delete copy.id; endEdit(); fillForm(copy); setStatus("Loaded copy — edit and Save to add","pill"); }
-    if(act==="del"){
-      if(confirm("Delete this entry?")){
-        lastDeleted=entries[idx]; entries.splice(idx,1); setEntries(entries);
-        renderTable(); if(chartsInitialized) rebuildCharts(); setStatus("Deleted","pill bad"); if(editingId===id) endEdit(); showUndoToast();
-      }
-    }
-  });
-
-  // Filters (debounced for smoother typing)
-  const handleFilters = debounce(()=>{ saveUIState(); renderTable(); if(chartsInitialized) rebuildCharts(); }, 160);
-  ["search","filterMethod","filterForm","filterFrom","filterTo","sortBy"].forEach(id=>{
-    document.getElementById(id).addEventListener("input", handleFilters);
-  });
-  $("#clearFiltersBtn").addEventListener("click", ()=>{ $("#search").value=""; $("#filterMethod").value=""; $("#filterForm").value=""; $("#filterFrom").value=""; $("#filterTo").value=""; handleFilters(); });
-
-  // Export / Import (with checksum)
-  $("#exportJsonBtn").addEventListener("click", ()=>{
-    const useFiltered = $("#exportFiltered").checked;
-    const entries = useFiltered? getFilteredEntries() : getEntries();
-    const canon = JSON.stringify(entries);
-    const checksum = crc32(canon).toString(16).padStart(8,"0");
-    const wrapper = { type:"mmj-export-v2", createdAt: Date.now(), count: entries.length, checksum, entries };
-    download(`meds_entries_${localFileDate()}${useFiltered?"_filtered":""}.json`, JSON.stringify(wrapper,null,2), "application/json");
-  });
-  // CSV Export (respects "Export filtered only")
-  $("#exportCsvBtn").addEventListener("click", ()=>{
-    const useFiltered = $("#exportFiltered").checked;
-    const entries = useFiltered ? getFilteredEntries() : getEntries();
-    const csv = toCSV(entries);
-    download(`meds_entries_${localFileDate()}${useFiltered ? "_filtered" : ""}.csv`, csv, "text/csv");
-  });
-
-  $("#importJson").addEventListener("change", async (ev)=>{
-    const f=ev.target.files?.[0]; if(!f) return;
-    try{
-      const text = await f.text();
-      let data = JSON.parse(text);
-      let incomingArr = null;
-      if (Array.isArray(data)){ incomingArr = data; }
-      else if (data && Array.isArray(data.entries)){
-        const canon = JSON.stringify(data.entries);
-        const calc = crc32(canon).toString(16).padStart(8,"0");
-        if (data.checksum && data.checksum !== calc){
-          throw new Error("Checksum mismatch. File may be corrupted or partially synced.");
-        }
-        incomingArr = data.entries;
-      } else { throw new Error("Invalid JSON"); }
-      const existing = getEntries();
-      const map = new Map(existing.map(e=>[e.id,e]));
-      for(const e of incomingArr){ if(!e.id) e.id = uid(); map.set(e.id, e); }
-      setEntries(Array.from(map.values()));
-      renderTable(); if(chartsInitialized) rebuildCharts(); setStatus("Imported ✓","pill ok"); endEdit();
-    }catch(err){ console.error(err); setStatus(err?.message || "Import failed","pill bad"); }
-    finally{ ev.target.value=""; }
-  });
-
-  $("#resetBtn").addEventListener("click", ()=>{ if(confirm("This will delete ALL entries in this browser. Continue?")){ localStorage.removeItem(KEY); renderTable(); if(chartsInitialized) rebuildCharts(); setStatus("All data erased","pill bad"); endEdit(); clearDraft(); } });
-
-  // Doctor Summary
-  $("#genSummaryBtn").addEventListener("click", ()=>{ const range=$("#summaryRange").value; $("#summaryText").value=generateDoctorSummary(range); saveUIState(); });
-  $("#copySummaryBtn").addEventListener("click", async ()=>{ const txt=$("#summaryText").value||""; try{ await navigator.clipboard.writeText(txt); setStatus("Summary copied ✓","pill ok"); }catch{ setStatus("Copy failed","pill bad"); }});
-  $("#downloadSummaryBtn").addEventListener("click", ()=>{ const txt=$("#summaryText").value||""; const range=$("#summaryRange").value; download(`doctor_summary_${range==='all'?'all':range+'d'}.txt`, txt, "text/plain"); });
-
-  // Template modal
-  $("#manageTemplatesBtn").addEventListener("click", openTplModal);
-  $("#tplCloseBtn").addEventListener("click", closeTplModal);
-  $("#tplNewBtn").addEventListener("click", ()=>{ loadTemplateEditor(null); showTplEditView(); });
-  $("#tplCancelEditBtn").addEventListener("click", ()=>{ loadTemplateEditor(null); showTplListView(); });
-  $("#tplSaveBtn").addEventListener("click", ()=>{
-    const data = readTemplateEditor();
-    if(!data.name){ $("#tplName").classList.add("error"); $("#tplName").setAttribute("aria-invalid","true"); $("#tplName").focus(); return; }
-    const arr = getTemplates();
-    if(tplEditingId){
-      const idx = arr.findIndex(t=>t.id===tplEditingId);
-      if(idx>=0){ arr[idx] = {...arr[idx], ...data, id:tplEditingId}; setTemplates(arr); }
-    }else{
-      arr.push({ id: uid(), name:data.name, pinned:!!data.pinned, fields:data.fields, createdAt:Date.now() });
-      setTemplates(arr);
-    }
-    renderTplList(); renderPinnedTemplates(); showTplListView(); setStatus("Template saved ✓","pill ok");
-  });
-  $("#tplList").addEventListener("click",(e)=>{
-    const btn=e.target.closest("button[data-act]"); if(!btn) return;
-    const id=btn.dataset.id, act=btn.dataset.act;
-    const arr=getTemplates(); const idx=arr.findIndex(t=>t.id===id); if(idx<0) return;
-    if(act==="apply"){ applyTemplate(arr[idx]); closeTplModal(); }
-    if(act==="edit"){ tplEditingId=id; loadTemplateEditor(arr[idx]); showTplEditView(); }
-    if(act==="pin"){ arr[idx].pinned = !arr[idx].pinned; setTemplates(arr); renderTplList(); renderPinnedTemplates(); }
-    if(act==="del"){
-      if(confirm("Delete this template?")){ arr.splice(idx,1); setTemplates(arr); renderTplList(); renderPinnedTemplates(); setStatus("Template deleted","pill bad"); }
-    }
-  });
-  // Modal UX: start closed, backdrop click & Esc to close
-  closeTplModal();
-  $("#tplModal").addEventListener("click", (e)=>{ if (e.target.id === "tplModal") closeTplModal(); });
-  document.addEventListener("keydown", (e)=>{ const isOpen=!$("#tplModal").hidden; if (e.key === "Escape" && isOpen) closeTplModal(); });
-
-  // Settings toggles
-  $("#dupPrevent").addEventListener("change",(e)=>{ const s=getSettings(); s.dupPrevent=e.target.checked; saveSettings(s); });
-  $("#exportFiltered").addEventListener("change",(e)=>{ const s=getSettings(); s.exportFiltered=e.target.checked; saveSettings(s); });
-
-  // Shortcuts
-  document.addEventListener("keydown",(e)=>{
-    const isInput=["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName);
-    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){ e.preventDefault(); $("#saveBtn").click(); }
-    if(!isInput && e.key==="/"){ e.preventDefault(); $("#search").focus(); }
-  });
-
-  // Unload guard
-  window.addEventListener("beforeunload",(e)=>{ const draft=localStorage.getItem(DRAFT_KEY); if(editingId || (draft && draft!=="{}")){ e.preventDefault(); e.returnValue=""; } });
-
-  // Service worker registration (PWA / offline)
-  if("serviceWorker" in navigator){
-    window.addEventListener("load", ()=> {
-      navigator.serviceWorker.register("./sw.js").catch(()=>{ /* ignore */ });
-    });
-  }
-});
-
-/* ---------- Undo Delete ---------- */
-function showUndoToast(){ undoToast.style.display="flex"; clearTimeout(undoTimer); undoTimer=setTimeout(()=>{ undoToast.style.display="none"; lastDeleted=null; },6000); }
-undoBtn.addEventListener("click", ()=>{ if(lastDeleted){ const entries=getEntries(); entries.push(lastDeleted); setEntries(entries); renderTable(); rebuildCharts(); setStatus("Restored ✓","pill ok"); lastDeleted=null; undoToast.style.display="none"; clearTimeout(undoTimer); }});
-
-/* ---------- Error clearing for required fields ---------- */
-function attachErrorClearing(){ requiredFields.forEach(sel=>{ const el=$(sel); const evt=(el.tagName==="SELECT")?"change":"input"; el.addEventListener(evt, ()=>{ el.classList.remove("error"); el.removeAttribute("aria-invalid"); }); }); }
 </script>
 </body>
 </html>
