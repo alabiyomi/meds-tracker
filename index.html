@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Medication Tracker</title>
 
-<!-- Icons / Manifest -->
+<!-- PWA / Icons -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-256.png">
 <link rel="icon" href="icon-256.png"/>
@@ -43,13 +43,15 @@
   html,body{height:100%}
   body{
     margin:0;
+    /* Put system first to reduce font-swap reflow, Inter still loads via display=swap */
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", Inter, ui-sans-serif, sans-serif;
     background:var(--md-sys-color-surface-variant);
     color:var(--md-sys-color-on-surface);
-    font-family: -apple-system,BlinkMacSystemFont,"Inter",ui-sans-serif,system-ui,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans",sans-serif;
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
   }
 
+  /* App bar */
   .appbar{
     position:sticky; top:0; z-index:20;
     background: linear-gradient(180deg, rgba(139,92,246,.10), rgba(139,92,246,0)), var(--md-sys-color-surface);
@@ -106,8 +108,8 @@
 
   /* GRID */
   .row{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; }
-  .row > *{ min-width:0; }   /* prevent Safari overflow in grid items */
-  .field{ display:block; position:relative; min-width:0; }
+  .row > *{ min-width:0; }        /* Prevent grid children from overflowing (Safari) */
+  .field{ display:block; position:relative; min-width:0; overflow:hidden; } /* clip any stubborn native control bleed */
   .col-3{grid-column: span 3;}
   .col-4{grid-column: span 4;}
   .col-6{grid-column: span 6;}
@@ -118,9 +120,12 @@
   .field label{ display:block; font-size:.92rem; color:var(--md-sys-color-secondary); margin-bottom:6px; }
   .input, select, textarea{
     display:block;
+    inline-size:100%;    /* logical width for RTL safety */
+    max-inline-size:100%;
+    min-inline-size:0;
     width:100%;
     max-width:100%;
-    min-width:0;          /* critical for iOS within CSS grid */
+    min-width:0;
     padding:12px 12px;
     border:1px solid var(--md-sys-color-outline);
     border-radius:12px; background:#0d172b; color:var(--md-sys-color-on-surface);
@@ -130,14 +135,22 @@
     box-sizing:border-box;
   }
 
-  /* iOS Safari: ensure native date/time controls obey container width */
+  /* iOS Safari: force native date/time to obey container width */
+  input[type="date"].input,
+  input[type="time"].input{
+    appearance:none;
+    -webkit-appearance:none;
+    background-clip: padding-box;
+  }
   @supports (-webkit-touch-callout: none){
     input[type="date"].input,
     input[type="time"].input{
+      inline-size:100%;
+      max-inline-size:100%;
+      min-inline-size:0 !important;
       width:100%;
       max-width:100%;
       min-width:0 !important;
-      box-sizing:border-box;
       font-variant-numeric: tabular-nums;
     }
   }
@@ -161,6 +174,8 @@
     transition:box-shadow .15s, background .15s, border-color .15s, transform .02s; user-select:none;
     will-change:transform;
   }
+  /* Avoid CLS when Save -> Update text changes */
+  #saveBtn{ min-width:100px; }
   .btn:hover{ box-shadow: var(--shadow-1); background:#12203a; }
   .btn:active{ transform: translateY(.5px); }
   .btn .mi{ font-family:"Material Symbols Outlined"; font-size:20px; }
@@ -178,6 +193,7 @@
 
   /* Status pills */
   .pill{ padding:6px 12px; border-radius:999px; font-size:.88rem; background:#101b31; border:1px solid #223353; color:#d6d9ff; }
+  #status{ min-width:72px; text-align:center; } /* reserve width to prevent shift */
   .ok{ background:#0f2a23; border-color:#1d473c; color:#9ff1d0; }
   .warn{ background:#2b230a; border-color:#4b3c12; color:#ffe29a; }
   .bad{ background:#2b0f12; border-color:#502127; color:#ffb3b3; }
@@ -188,6 +204,16 @@
   th{ position:sticky; top:0; background:#0e1930; text-align:left; font-weight:600; }
   tr:hover td{ background:color-mix(in srgb, var(--md-sys-color-primary) 10%, #0b1220); }
 
+  /* Suggest dropdown */
+  .suggest-box{
+    position:absolute; top: calc(100% + 6px); left: 0; right: 0;
+    max-height: 260px; overflow:auto; background:#0e182c; border:1px solid #1a2741;
+    border-radius:12px; box-shadow: var(--shadow-2); z-index: 8;
+  }
+  .suggest-item{ padding:10px 12px; cursor:pointer; color:#e5e7eb; }
+  .suggest-item:hover,.suggest-item[aria-selected="true"]{ background:#122340; }
+  .suggest-empty{ padding:10px 12px; color:#98a3b6; }
+
   .toast{
     position:fixed; right:16px; bottom:16px; display:none; gap:10px; align-items:center;
     background:#0e182c; border:1px solid #1a2741; border-radius:999px;
@@ -197,17 +223,13 @@
   [hidden]{ display:none !important; }
   .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:60; }
   .modal-backdrop.is-open{ display:flex; align-items:center; justify-content:center; }
-  .modal{
-    width:min(720px, 92vw); max-height:90vh; overflow:auto; background:#0b1220;
-    border:1px solid #162236; border-radius:18px; padding:var(--space-4);
-    box-shadow: var(--shadow-2);
-  }
+  .modal{ width:min(720px, 92vw); max-height:90vh; overflow:auto; background:#0b1220; border:1px solid #162236; border-radius:18px; padding:var(--space-4); box-shadow: var(--shadow-2); }
   .modal-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:var(--space-3); }
   .modal-grid{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; }
   .modal-footer{ display:flex; gap:10px; justify-content:flex-end; margin-top:var(--space-3); }
-
   .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
+  /* Mobile tuning */
   @media (max-width: 1100px){
     .col-6,.col-4,.col-3,.col-8{grid-column:span 12;}
     .row{ grid-template-columns: repeat(6,1fr); }
@@ -217,7 +239,20 @@
     .btn{ min-height:46px; }
     th,td{ padding:10px; }
     .title h1{ font-size:1.1rem; max-width:58vw; }
+
+    /* Swipeable toolbar to avoid wrap-jitter */
+    .actions{
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      padding-bottom:6px;
+      scrollbar-width: none;
+    }
+    .actions::-webkit-scrollbar{ display:none; }
+    .actions > *{ flex:0 0 auto; }
   }
+
+  /* Reserve space to avoid shift when template chips render */
+  #templatesBar{ min-height:48px; }
 </style>
 </head>
 <body>
@@ -255,80 +290,83 @@
         <span id="reliefPreview" class="pill">Relief: —</span>
       </div>
 
-      <div class="row" id="formGrid">
-        <div class="col-4 field">
-          <label for="date">Date</label>
-          <input class="input" type="date" id="date" required autocomplete="date">
-        </div>
-        <div class="col-4 field">
-          <label for="time">Time</label>
-          <input class="input" type="time" id="time" required autocomplete="time">
-        </div>
-        <div class="col-4 field">
-          <label for="environment">Environment</label>
-          <input class="input" type="text" id="environment" placeholder="Home / After work / Before bed" autocomplete="off">
-        </div>
+      <!-- The form wrapper is now in HTML to avoid CLS -->
+      <form id="trackerForm" novalidate>
+        <div class="row" id="formGrid">
+          <div class="col-4 field">
+            <label for="date">Date</label>
+            <input class="input" type="date" id="date" required autocomplete="date">
+          </div>
+          <div class="col-4 field">
+            <label for="time">Time</label>
+            <input class="input" type="time" id="time" required autocomplete="time">
+          </div>
+          <div class="col-4 field">
+            <label for="environment">Environment</label>
+            <input class="input" type="text" id="environment" placeholder="Home / After work / Before bed" autocomplete="off">
+          </div>
 
-        <div class="col-4 field">
-          <label for="strain">Strain / Product</label>
-          <input class="input" type="text" id="strain" placeholder="Blue Dream" required autocomplete="off">
-        </div>
-        <div class="col-4 field">
-          <label for="thc_cbd">THC/CBD</label>
-          <input class="input" type="text" id="thc_cbd" placeholder="THC 18% / CBD 1%" required autocomplete="off">
-        </div>
-        <div class="col-4 field">
-          <label for="form">Form</label>
-          <select class="input" id="form" required>
-            <option value="" disabled selected>Select…</option>
-            <option>Flower</option><option>Vape</option><option>Oil</option>
-            <option>Tincture</option><option>Edible</option><option>Topical</option>
-          </select>
-        </div>
+          <div class="col-4 field">
+            <label for="strain">Strain / Product</label>
+            <input class="input" type="text" id="strain" placeholder="Blue Dream" required autocomplete="off">
+          </div>
+          <div class="col-4 field">
+            <label for="thc_cbd">THC/CBD</label>
+            <input class="input" type="text" id="thc_cbd" placeholder="THC 18% / CBD 1%" required autocomplete="off">
+          </div>
+          <div class="col-4 field">
+            <label for="form">Form</label>
+            <select class="input" id="form" required>
+              <option value="" disabled selected>Select…</option>
+              <option>Flower</option><option>Vape</option><option>Oil</option>
+              <option>Tincture</option><option>Edible</option><option>Topical</option>
+            </select>
+          </div>
 
-        <div class="col-4 field">
-          <label for="method">Method</label>
-          <select class="input" id="method" required>
-            <option value="" disabled selected>Select…</option>
-            <option>Vaporized</option><option>Smoked</option><option>Oral</option>
-            <option>Topical</option><option>Sublingual</option>
-          </select>
-        </div>
-        <div class="col-4 field">
-          <label for="dose">Dose</label>
-          <input class="input" type="text" id="dose" placeholder="0.3 g / 5 mg THC" required autocomplete="off" inputmode="decimal">
-        </div>
-        <div class="col-4 field">
-          <label for="reason">Reason / Symptom</label>
-          <input class="input" type="text" id="reason" placeholder="Pain / Anxiety / Insomnia" required autocomplete="off">
-        </div>
+          <div class="col-4 field">
+            <label for="method">Method</label>
+            <select class="input" id="method" required>
+              <option value="" disabled selected>Select…</option>
+              <option>Vaporized</option><option>Smoked</option><option>Oral</option>
+              <option>Topical</option><option>Sublingual</option>
+            </select>
+          </div>
+          <div class="col-4 field">
+            <label for="dose">Dose</label>
+            <input class="input" type="text" id="dose" placeholder="0.3 g / 5 mg THC" required autocomplete="off" inputmode="decimal">
+          </div>
+          <div class="col-4 field">
+            <label for="reason">Reason / Symptom</label>
+            <input class="input" type="text" id="reason" placeholder="Pain / Anxiety / Insomnia" required autocomplete="off">
+          </div>
 
-        <div class="col-3 field">
-          <label for="before">Symptom Before (0–10)</label>
-          <input class="input" type="number" id="before" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-        </div>
-        <div class="col-3 field">
-          <label for="after">Symptom After (0–10)</label>
-          <input class="input" type="number" id="after" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-        </div>
-        <div class="col-3 field">
-          <label for="onset">Onset (min)</label>
-          <input class="input" type="number" id="onset" min="0" step="1" placeholder="e.g., 15" inputmode="numeric" pattern="[0-9]*">
-        </div>
-        <div class="col-3 field">
-          <label for="duration">Duration (hours)</label>
-          <input class="input" type="number" id="duration" min="0" step="0.1" placeholder="e.g., 2.5" inputmode="decimal">
-        </div>
+          <div class="col-3 field">
+            <label for="before">Symptom Before (0–10)</label>
+            <input class="input" type="number" id="before" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+          </div>
+          <div class="col-3 field">
+            <label for="after">Symptom After (0–10)</label>
+            <input class="input" type="number" id="after" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+          </div>
+          <div class="col-3 field">
+            <label for="onset">Onset (min)</label>
+            <input class="input" type="number" id="onset" min="0" step="1" placeholder="e.g., 15" inputmode="numeric" pattern="[0-9]*">
+          </div>
+          <div class="col-3 field">
+            <label for="duration">Duration (hours)</label>
+            <input class="input" type="number" id="duration" min="0" step="0.1" placeholder="e.g., 2.5" inputmode="decimal">
+          </div>
 
-        <div class="col-6 field">
-          <label for="side_effects">Side Effects</label>
-          <input class="input" type="text" id="side_effects" placeholder="Dry mouth, Drowsy / Red eyes" autocomplete="off">
+          <div class="col-6 field">
+            <label for="side_effects">Side Effects</label>
+            <input class="input" type="text" id="side_effects" placeholder="Dry mouth, Drowsy / Red eyes" autocomplete="off">
+          </div>
+          <div class="col-6 field">
+            <label for="notes">Notes</label>
+            <textarea class="input" id="notes" placeholder="Context, sleep quality, appetite, dreams, etc."></textarea>
+          </div>
         </div>
-        <div class="col-6 field">
-          <label for="notes">Notes</label>
-          <textarea class="input" id="notes" placeholder="Context, sleep quality, appetite, dreams, etc."></textarea>
-        </div>
-      </div>
+      </form>
 
       <div class="controls" id="templatesBar" style="margin-top:12px;">
         <span class="pill">Templates:</span>
@@ -471,7 +509,7 @@ function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 
 /* ---------- CRC32 for export integrity ---------- */
 const CRC32_TABLE = (()=>{ let c, table=[]; for (let n=0; n<256; n++){ c=n; for (let k=0;k<8;k++){ c = (c&1)? (0xEDB88320 ^ (c>>>1)) : (c>>>1); } table[n]=c; } return table; })();
-function crc32(str){ let crc = 0 ^ (-1); for (let i=0; i<str.length; i++){ crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ str.charCodeAt(i)) & 0xFF]; } return (crc ^ (-1)) >>> 0; }
+function crc32(str){ let crc = 0 ^ (-1); for (let i=0; i<str.length; i++){ crc = (crc >>> 8) ^ CRC32_TABLE[(c rc ^ str.charCodeAt(i)) & 0xFF]; } return (crc ^ (-1)) >>> 0; }
 
 /* ---------- Dose parsing ---------- */
 function parsePotency(thc_cbd){
@@ -693,6 +731,8 @@ function getFilteredEntries(){
 }
 
 /* ---------- Table ---------- */
+function toCSV(arr){ const entries=arr||getEntries(); const cols=["date","time","strain","thc_cbd","form","method","dose","reason","before","after","relief","onset","duration","side_effects","environment","notes"]; const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`; const lines=[cols.join(",")]; for(const e of entries){ lines.push(cols.map(k=>esc(e[k])).join(",")); } return lines.join("\n"); }
+
 function renderTable(){
   const tbody=$("#table tbody"); tbody.innerHTML="";
   const sort=$("#sortBy").value; const rows=getFilteredEntries().slice();
@@ -779,10 +819,6 @@ function generateDoctorSummary(range="30"){
 
 /* ---------- Init & Events ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
-  // Wrap form grid in a <form>
-  const formWrap=document.createElement("form"); formWrap.id="trackerForm"; formWrap.addEventListener("submit", e=>e.preventDefault());
-  const formSection=document.getElementById("formGrid"); formSection.parentNode.insertBefore(formWrap, formSection); formWrap.appendChild(formSection);
-
   // Suggestions
   attachSuggest("strain", ()=>getRecentTokens("strain"));
   attachSuggest("thc_cbd", ()=>getRecentTokens("thc_cbd"));
@@ -955,9 +991,6 @@ undoBtn.addEventListener("click", ()=>{ if(lastDeleted){ const entries=getEntrie
 
 /* ---------- Error clearing ---------- */
 function attachErrorClearing(){ requiredFields.forEach(sel=>{ const el=$(sel); const evt=(el.tagName==="SELECT")?"change":"input"; el.addEventListener(evt, ()=>el.classList.remove("error")); }); }
-
-/* ---------- CSV ---------- */
-function toCSV(arr){ const entries=arr||getEntries(); const cols=["date","time","strain","thc_cbd","form","method","dose","reason","before","after","relief","onset","duration","side_effects","environment","notes"]; const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`; const lines=[cols.join(",")]; for(const e of entries){ lines.push(cols.map(k=>esc(e[k])).join(",")); } return lines.join("\n"); }
 
 /* ---------- Templates ---------- */
 function defaultTemplates(){
