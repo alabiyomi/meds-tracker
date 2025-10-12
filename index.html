@@ -43,7 +43,6 @@
   html,body{height:100%}
   body{
     margin:0;
-    /* Put system first to reduce font-swap reflow, Inter still loads via display=swap */
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", Inter, ui-sans-serif, sans-serif;
     background:var(--md-sys-color-surface-variant);
     color:var(--md-sys-color-on-surface);
@@ -108,8 +107,8 @@
 
   /* GRID */
   .row{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; }
-  .row > *{ min-width:0; }        /* Prevent grid children from overflowing (Safari) */
-  .field{ display:block; position:relative; min-width:0; overflow:hidden; } /* clip any stubborn native control bleed */
+  .row > *{ min-width:0; }
+  .field{ display:block; position:relative; min-width:0; overflow:hidden; }
   .col-3{grid-column: span 3;}
   .col-4{grid-column: span 4;}
   .col-6{grid-column: span 6;}
@@ -120,7 +119,7 @@
   .field label{ display:block; font-size:.92rem; color:var(--md-sys-color-secondary); margin-bottom:6px; }
   .input, select, textarea{
     display:block;
-    inline-size:100%;    /* logical width for RTL safety */
+    inline-size:100%;
     max-inline-size:100%;
     min-inline-size:0;
     width:100%;
@@ -130,12 +129,10 @@
     border:1px solid var(--md-sys-color-outline);
     border-radius:12px; background:#0d172b; color:var(--md-sys-color-on-surface);
     outline:none; transition:border .15s, box-shadow .15s, background .15s;
-    font-size:16px; /* avoid iOS zoom */
+    font-size:16px;
     min-height:46px;
     box-sizing:border-box;
   }
-
-  /* iOS Safari: force native date/time to obey container width */
   input[type="date"].input,
   input[type="time"].input{
     appearance:none;
@@ -154,7 +151,6 @@
       font-variant-numeric: tabular-nums;
     }
   }
-
   .input:focus, select:focus, textarea:focus{
     border-color:var(--md-sys-color-primary);
     box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 28%, transparent);
@@ -174,7 +170,6 @@
     transition:box-shadow .15s, background .15s, border-color .15s, transform .02s; user-select:none;
     will-change:transform;
   }
-  /* Avoid CLS when Save -> Update text changes */
   #saveBtn{ min-width:100px; }
   .btn:hover{ box-shadow: var(--shadow-1); background:#12203a; }
   .btn:active{ transform: translateY(.5px); }
@@ -193,7 +188,7 @@
 
   /* Status pills */
   .pill{ padding:6px 12px; border-radius:999px; font-size:.88rem; background:#101b31; border:1px solid #223353; color:#d6d9ff; }
-  #status{ min-width:72px; text-align:center; } /* reserve width to prevent shift */
+  #status{ min-width:72px; text-align:center; }
   .ok{ background:#0f2a23; border-color:#1d473c; color:#9ff1d0; }
   .warn{ background:#2b230a; border-color:#4b3c12; color:#ffe29a; }
   .bad{ background:#2b0f12; border-color:#502127; color:#ffb3b3; }
@@ -204,7 +199,6 @@
   th{ position:sticky; top:0; background:#0e1930; text-align:left; font-weight:600; }
   tr:hover td{ background:color-mix(in srgb, var(--md-sys-color-primary) 10%, #0b1220); }
 
-  /* Suggest dropdown */
   .suggest-box{
     position:absolute; top: calc(100% + 6px); left: 0; right: 0;
     max-height: 260px; overflow:auto; background:#0e182c; border:1px solid #1a2741;
@@ -239,8 +233,6 @@
     .btn{ min-height:46px; }
     th,td{ padding:10px; }
     .title h1{ font-size:1.1rem; max-width:58vw; }
-
-    /* Swipeable toolbar to avoid wrap-jitter */
     .actions{
       overflow-x:auto;
       -webkit-overflow-scrolling:touch;
@@ -251,7 +243,7 @@
     .actions > *{ flex:0 0 auto; }
   }
 
-  /* Reserve space to avoid shift when template chips render */
+  /* Reserve space for template chips to avoid shift */
   #templatesBar{ min-height:48px; }
 </style>
 </head>
@@ -290,7 +282,7 @@
         <span id="reliefPreview" class="pill">Relief: —</span>
       </div>
 
-      <!-- The form wrapper is now in HTML to avoid CLS -->
+      <!-- Form wrapper is in HTML to avoid CLS -->
       <form id="trackerForm" novalidate>
         <div class="row" id="formGrid">
           <div class="col-4 field">
@@ -507,9 +499,15 @@ function setStatus(msg, cls="pill"){ statusPill.textContent=msg; statusPill.clas
 function getSettings(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { dupPrevent:true, exportFiltered:false }; }catch{ return { dupPrevent:true, exportFiltered:false }; } }
 function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
 
-/* ---------- CRC32 for export integrity ---------- */
+/* ---------- CRC32 for export integrity (fixed) ---------- */
 const CRC32_TABLE = (()=>{ let c, table=[]; for (let n=0; n<256; n++){ c=n; for (let k=0;k<8;k++){ c = (c&1)? (0xEDB88320 ^ (c>>>1)) : (c>>>1); } table[n]=c; } return table; })();
-function crc32(str){ let crc = 0 ^ (-1); for (let i=0; i<str.length; i++){ crc = (crc >>> 8) ^ CRC32_TABLE[(c rc ^ str.charCodeAt(i)) & 0xFF]; } return (crc ^ (-1)) >>> 0; }
+function crc32(str){
+  let crc = 0 ^ (-1);
+  for (let i=0; i<str.length; i++){
+    crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ str.charCodeAt(i)) & 0xFF];
+  }
+  return (crc ^ (-1)) >>> 0;
+}
 
 /* ---------- Dose parsing ---------- */
 function parsePotency(thc_cbd){
@@ -819,7 +817,6 @@ function generateDoctorSummary(range="30"){
 
 /* ---------- Init & Events ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
-  // Suggestions
   attachSuggest("strain", ()=>getRecentTokens("strain"));
   attachSuggest("thc_cbd", ()=>getRecentTokens("thc_cbd"));
   attachSuggest("dose", ()=>getRecentTokens("dose"));
