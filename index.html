@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Medication Tracker</title>
+<link rel="icon" href="data:,"/>
+<!-- iOS/PWA meta & manifest -->
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- Modern clean font + Material Symbols -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:wght@300;400;600" rel="stylesheet">
+
+<style>
+  :root{
+    /* Darker theme by default */
+    --md-sys-color-primary:#8b5cf6;          /* Violet 500 */
+    --md-sys-color-primary-variant:#7c3aed;  /* Violet 600 */
+    --md-sys-color-secondary:#94a3b8;        /* Slate 400 */
+    --md-sys-color-error:#f87171;            /* Red 400 */
+    --md-sys-color-surface:#0b1220;          /* Cards / surfaces */
+    --md-sys-color-surface-variant:#070d18;  /* Page background */
+    --md-sys-color-on-surface:#e5e7eb;       /* Text */
+    --md-sys-color-outline:#162236;          /* Borders */
+
+    --radius:16px;
+    --radius-sm:12px;
+    --shadow-1:0 1px 2px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.35);
+    --shadow-2:0 14px 36px rgba(0,0,0,.55), 0 6px 14px rgba(0,0,0,.45);
+
+    --space-1:6px; --space-2:10px; --space-3:14px; --space-4:18px; --space-5:24px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--md-sys-color-surface-variant);
+    color:var(--md-sys-color-on-surface);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  /* Top app bar with soft gradient */
+  .appbar{
+    position:sticky; top:0; z-index:20;
+    background:
+      linear-gradient(180deg, rgba(139,92,246,.10), rgba(139,92,246,0))
+      , var(--md-sys-color-surface);
+    border-bottom:1px solid var(--md-sys-color-outline);
+    backdrop-filter:saturate(1.1) blur(6px);
+  }
+  .appbar .inner{
+    max-width:1200px; margin-inline:auto; padding: var(--space-3);
+    display:flex; align-items:center; gap:12px; justify-content:space-between;
+    flex-wrap:wrap; /* allow toolbar to wrap on small screens */
+  }
+  .title{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .title .icon{ font-family:"Material Symbols Outlined"; font-size:28px; color:var(--md-sys-color-primary); }
+  .title h1{ font-size:clamp(1.05rem, 1.4vw + .7rem, 1.35rem); margin:0; font-weight:700; letter-spacing:.1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:62vw; }
+
+  .wrap{ max-width:1200px; margin-inline:auto; padding: var(--space-4) var(--space-3); }
+
+  .card{
+    background:var(--md-sys-color-surface);
+    border:1px solid var(--md-sys-color-outline);
+    border-radius:var(--radius);
+    box-shadow: var(--shadow-1);
+    padding: var(--space-4);
+  }
+
+  .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; row-gap:6px; }
+  .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+
+  /* Inputs */
+  .field{ display:block; position:relative; } /* anchor for suggestion dropdowns */
+  .field label{ display:block; font-size:.92rem; color:var(--md-sys-color-secondary); margin-bottom:6px; }
+  .input, select, textarea{
+    width:100%; padding:12px 12px;
+    border:1px solid var(--md-sys-color-outline);
+    border-radius:12px; background:#0d172b; color:var(--md-sys-color-on-surface);
+    outline:none; transition:border .15s, box-shadow .15s, background .15s;
+    font-size:16px; /* no iOS zoom */
+  }
+  .input:focus, select:focus, textarea:focus{
+    border-color:var(--md-sys-color-primary);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 28%, transparent);
+    background:#0f1c35;
+  }
+  .error{
+    border-color:var(--md-sys-color-error) !important;
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-error) 28%, transparent) !important;
+    background:#261217 !important;
+  }
+
+  .row{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; }
+  .col-3{grid-column: span 3;}
+  .col-4{grid-column: span 4;}
+  .col-6{grid-column: span 6;}
+  .col-8{grid-column: span 8;}
+  .col-12{grid-column: span 12;}
+
+  /* Buttons */
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; justify-content:center;
+    border:1px solid var(--md-sys-color-outline); color:var(--md-sys-color-on-surface); background:#0f1a2e;
+    border-radius:999px; padding:10px 14px; min-height:42px; cursor:pointer; min-width:0;
+    transition:box-shadow .15s, background .15s, border-color .15s, transform .02s; user-select:none;
+    will-change:transform;
+  }
+  .btn:hover{ box-shadow: var(--shadow-1); background:#12203a; }
+  .btn:active{ transform: translateY(.5px); }
+  .btn .mi{ font-family:"Material Symbols Outlined"; font-size:20px; }
+  .btn .btn-label{ white-space:nowrap; }
+  .btn-primary{
+    background:linear-gradient(180deg, color-mix(in srgb, var(--md-sys-color-primary) 85%, #0b0b0b), var(--md-sys-color-primary));
+    color:#fff; border-color:var(--md-sys-color-primary-variant);
+    box-shadow:0 12px 24px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+  }
+  .btn-primary:hover{ box-shadow: var(--shadow-2); }
+  .btn-tonal{ background:#121e37; border-color:#1b2a45; color:#c7b9ff; }
+  .btn-danger{ border-color:#3b1c23; background:#221117; color:#ffb3b3; }
+  .btn-ghost{ background:#0f1a2e; }
+  .btn-chip{ border-radius:999px; padding:8px 12px; border-color:#1b2840; background:#111d34; }
+
+  /* Status pills */
+  .pill{ padding:6px 12px; border-radius:999px; font-size:.88rem; background:#101b31; border:1px solid #223353; color:#d6d9ff; }
+  .ok{ background:#0f2a23; border-color:#1d473c; color:#9ff1d0; }
+  .warn{ background:#2b230a; border-color:#4b3c12; color:#ffe29a; }
+  .bad{ background:#2b0f12; border-color:#502127; color:#ffb3b3; }
+
+  .table-wrap{ overflow:auto; border-radius:14px; border:1px solid var(--md-sys-color-outline); }
+  table{ width:100%; border-collapse:collapse; min-width:980px; background:var(--md-sys-color-surface); }
+  th,td{ padding:12px; border-bottom:1px solid var(--md-sys-color-outline); vertical-align: top; }
+  th{ position:sticky; top:0; background:#0e1930; text-align:left; font-weight:600; }
+  tr:hover td{ background:color-mix(in srgb, var(--md-sys-color-primary) 10%, #0b1220); }
+
+  .stats{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+  .toast{
+    position:fixed; right:16px; bottom:16px; display:none; gap:10px; align-items:center;
+    background:#0e182c; border:1px solid #1a2741; border-radius:999px;
+    padding:10px 12px; box-shadow: var(--shadow-2); z-index:40; color:#e5e7eb;
+  }
+
+  /* Suggest dropdown */
+  .suggest-box{
+    position:absolute; top: calc(100% + 6px); left: 0; right: 0;
+    max-height: 260px; overflow:auto; background:#0e182c; border:1px solid #1a2741;
+    border-radius:12px; box-shadow: var(--shadow-2); z-index: 8;
+  }
+  .suggest-item{ padding:10px 12px; cursor:pointer; color:#e5e7eb; }
+  .suggest-item:hover,.suggest-item[aria-selected="true"]{
+    background:#122340;
+  }
+  .suggest-empty{ padding:10px 12px; color:#98a3b6; }
+
+  /* Modal (Template Manager) */
+  [hidden]{ display:none !important; }
+  .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:60; }
+  .modal-backdrop.is-open{ display:flex; align-items:center; justify-content:center; }
+  .modal{
+    width:min(720px, 92vw); max-height:90vh; overflow:auto; background:#0b1220;
+    border:1px solid #162236; border-radius:18px; padding:var(--space-4);
+    box-shadow: var(--shadow-2);
+  }
+  .modal-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:var(--space-3); }
+  .modal-grid{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; }
+  .modal-footer{ display:flex; gap:10px; justify-content:flex-end; margin-top:var(--space-3); }
+
+  /* Accessibility helpers */
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+  /* Responsive tuning */
+  @media (max-width: 1100px){
+    .col-6,.col-4,.col-3,.col-8{grid-column:span 12;}
+    .row{ grid-template-columns: repeat(6,1fr); }
+    .actions{ gap:6px; }
+  }
+  @media (max-width: 640px){
+    .btn{ min-height:46px; }
+    th,td{ padding:10px; }
+    .title h1{ font-size:1.1rem; max-width:58vw; }
+  }
+</style>
+</head>
+<body>
+  <!-- App Bar -->
+  <div class="appbar">
+    <div class="inner">
+      <div class="title">
+        <span class="icon">medication</span>
+        <h1>Medication Tracker</h1>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="saveBtn" type="button"><span class="mi">save</span><span class="btn-label">Save</span></button>
+        <button class="btn btn-ghost" id="newBtn" type="button"><span class="mi">note_add</span>New</button>
+        <button class="btn btn-ghost" id="exportJsonBtn" type="button"><span class="mi">ios_share</span>Export JSON</button>
+        <button class="btn btn-ghost" id="exportCsvBtn" type="button"><span class="mi">table</span>Export CSV</button>
+        <label class="btn btn-ghost" title="Import JSON">
+          <span class="mi">file_open</span>Import
+          <input type="file" id="importJson" accept="application/json" style="display:none">
+        </label>
+        <button class="btn btn-danger" id="resetBtn" type="button" title="Deletes all entries in this browser"><span class="mi">delete_forever</span>Erase All</button>
+        <span id="status" class="pill" role="status" aria-live="polite">Ready</span>
+        <span id="editingBadge" class="pill" style="display:none;">Editing…</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <!-- Form -->
+    <section class="card" aria-label="Log a new session">
+      <div class="controls" style="justify-content:space-between; margin-bottom:6px;">
+        <div class="controls" style="gap:8px;">
+          <label class="btn btn-chip" title="Warn on near-duplicates"><input type="checkbox" id="dupPrevent" style="margin-right:8px;">Duplicate prevention</label>
+          <label class="btn btn-chip" title="Exports use filtered dataset"><input type="checkbox" id="exportFiltered" style="margin-right:8px;">Export filtered only</label>
+        </div>
+        <span id="reliefPreview" class="pill">Relief: —</span>
+      </div>
+
+      <div class="row" id="formGrid">
+        <div class="col-4 field">
+          <label for="date">Date</label>
+          <input class="input" type="date" id="date" required>
+        </div>
+        <div class="col-4 field">
+          <label for="time">Time</label>
+          <input class="input" type="time" id="time" required>
+        </div>
+        <div class="col-4 field">
+          <label for="environment">Environment</label>
+          <input class="input" type="text" id="environment" placeholder="Home / After work / Before bed" autocomplete="off">
+        </div>
+
+        <div class="col-4 field">
+          <label for="strain">Strain / Product</label>
+          <input class="input" type="text" id="strain" placeholder="Blue Dream" required autocomplete="off">
+        </div>
+        <div class="col-4 field">
+          <label for="thc_cbd">THC/CBD</label>
+          <input class="input" type="text" id="thc_cbd" placeholder="THC 18% / CBD 1%" required autocomplete="off">
+        </div>
+        <div class="col-4 field">
+          <label for="form">Form</label>
+          <select class="input" id="form" required>
+            <option value="" disabled selected>Select…</option>
+            <option>Flower</option><option>Vape</option><option>Oil</option>
+            <option>Tincture</option><option>Edible</option><option>Topical</option>
+          </select>
+        </div>
+
+        <div class="col-4 field">
+          <label for="method">Method</label>
+          <select class="input" id="method" required>
+            <option value="" disabled selected>Select…</option>
+            <option>Vaporized</option><option>Smoked</option><option>Oral</option>
+            <option>Topical</option><option>Sublingual</option>
+          </select>
+        </div>
+        <div class="col-4 field">
+          <label for="dose">Dose</label>
+          <input class="input" type="text" id="dose" placeholder="0.3 g / 5 mg THC" required autocomplete="off">
+        </div>
+        <div class="col-4 field">
+          <label for="reason">Reason / Symptom</label>
+          <input class="input" type="text" id="reason" placeholder="Pain / Anxiety / Insomnia" required autocomplete="off">
+        </div>
+
+        <div class="col-3 field">
+          <label for="before">Symptom Before (0–10)</label>
+          <input class="input" type="number" id="before" min="0" max="10" step="1" required>
+        </div>
+        <div class="col-3 field">
+          <label for="after">Symptom After (0–10)</label>
+          <input class="input" type="number" id="after" min="0" max="10" step="1" required>
+        </div>
+        <div class="col-3 field">
+          <label for="onset">Onset (min)</label>
+          <input class="input" type="number" id="onset" min="0" step="1" placeholder="e.g., 15">
+        </div>
+        <div class="col-3 field">
+          <label for="duration">Duration (hours)</label>
+          <input class="input" type="number" id="duration" min="0" step="0.1" placeholder="e.g., 2.5">
+        </div>
+
+        <div class="col-6 field">
+          <label for="side_effects">Side Effects</label>
+          <input class="input" type="text" id="side_effects" placeholder="Dry mouth, Drowsy / Red eyes" autocomplete="off">
+        </div>
+        <div class="col-6 field">
+          <label for="notes">Notes</label>
+          <textarea class="input" id="notes" placeholder="Context, sleep quality, appetite, dreams, etc."></textarea>
+        </div>
+      </div>
+
+      <!-- Templates -->
+      <div class="controls" id="templatesBar" style="margin-top:12px;">
+        <span class="pill">Templates:</span>
+        <!-- pinned templates auto-insert here -->
+        <button class="btn btn-tonal btn-chip" id="saveAsTemplateBtn" type="button"><span class="mi">bookmark_add</span>Save Current</button>
+        <button class="btn btn-ghost btn-chip" id="manageTemplatesBtn" type="button"><span class="mi">tune</span>Manage</button>
+      </div>
+
+      <div class="stats" id="quickStats" style="margin-top:12px;"></div>
+    </section>
+
+    <!-- Filters + Table -->
+    <section class="card" aria-label="Entries" style="margin-top:16px;">
+      <div class="controls" style="margin-bottom:10px;">
+        <input id="search" class="input" style="flex:1; min-width:220px;" placeholder="Search strain, reason, notes…" />
+        <input type="date" id="filterFrom" class="input" title="From date" style="width:160px;">
+        <input type="date" id="filterTo" class="input" title="To date" style="width:160px;">
+        <select id="filterMethod" class="input" style="width:170px;">
+          <option value="">Method: All</option>
+          <option>Vaporized</option><option>Smoked</option><option>Oral</option>
+          <option>Topical</option><option>Sublingual</option>
+        </select>
+        <select id="filterForm" class="input" style="width:160px;">
+          <option value="">Form: All</option>
+          <option>Flower</option><option>Vape</option><option>Oil</option>
+          <option>Tincture</option><option>Edible</option><option>Topical</option>
+        </select>
+        <select id="sortBy" class="input" title="Sort" style="width:170px;">
+          <option value="date_desc">Newest</option>
+          <option value="date_asc">Oldest</option>
+          <option value="relief_desc">Relief (high→low)</option>
+          <option value="relief_asc">Relief (low→high)</option>
+        </select>
+        <button id="clearFiltersBtn" class="btn btn-chip"><span class="mi">filter_alt_off</span>Clear</button>
+        <span id="countPill" class="pill" title="Visible / Total">0 / 0</span>
+      </div>
+
+      <div class="table-wrap">
+        <table id="table" aria-describedby="entries table">
+          <thead>
+            <tr>
+              <th>Date</th><th>Time</th><th>Strain</th><th>THC/CBD</th>
+              <th>Form</th><th>Method</th><th>Dose</th><th>Reason</th>
+              <th>Before</th><th>After</th><th>Relief</th>
+              <th>Onset</th><th>Duration</th><th>Side Effects</th><th>Environment</th><th>Notes</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="card" style="margin-top:16px;">
+      <div class="row">
+        <div class="col-6"><h3>Daily Relief Trend (avg)</h3><canvas id="dailyReliefTrend" height="220"></canvas></div>
+        <div class="col-6"><h3>Relief by Strain (token avg)</h3><canvas id="reliefByStrain" height="220"></canvas></div>
+        <div class="col-6"><h3>Relief by Method (avg)</h3><canvas id="reliefByMethod" height="220"></canvas></div>
+        <div class="col-6"><h3>Relief by Reason (token avg)</h3><canvas id="reliefByReason" height="220"></canvas></div>
+        <div class="col-6"><h3>Usage by Method</h3><canvas id="methodShare" height="220"></canvas></div>
+        <div class="col-6"><h3>Usage by Form</h3><canvas id="formShare" height="220"></canvas></div>
+        <div class="col-6"><h3>Side Effects Frequency (top 10)</h3><canvas id="sideEffectsFreq" height="220"></canvas></div>
+        <div class="col-6"><h3>Environment Frequency</h3><canvas id="environmentFreq" height="220"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Doctor Summary -->
+    <section class="card" aria-label="Doctor Summary" style="margin-top:16px;">
+      <div class="controls" style="margin-bottom:10px;">
+        <strong>Doctor Summary:</strong>
+        <label for="summaryRange">Range</label>
+        <select id="summaryRange" class="input" style="width:170px;">
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="all">All time</option>
+        </select>
+        <button class="btn btn-primary" id="genSummaryBtn" type="button"><span class="mi">summarize</span>Generate</button>
+        <button class="btn btn-ghost" id="copySummaryBtn" type="button"><span class="mi">content_copy</span>Copy</button>
+        <button class="btn btn-ghost" id="downloadSummaryBtn" type="button"><span class="mi">download</span>Download</button>
+      </div>
+      <textarea id="summaryText" class="input" placeholder="Click Generate to create a summary for your doctor." readonly></textarea>
+    </section>
+
+    <footer style="opacity:.85; margin-top:var(--space-5); text-align:center;">
+      Stores data only in this browser (LocalStorage). Export JSON regularly for backup.
+    </footer>
+  </main>
+
+  <div class="toast" id="undoToast">
+    <span>Entry deleted.</span>
+    <button class="btn btn-chip" id="undoBtn" type="button"><span class="mi">undo</span>Undo</button>
+  </div>
+
+  <!-- Template Manager Modal -->
+  <div id="tplModal" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tplModalTitle">
+      <div class="modal-header">
+        <h3 id="tplModalTitle">Manage Templates</h3>
+        <div class="controls">
+          <button class="btn btn-chip" id="tplNewBtn" type="button"><span class="mi">add</span>New Template</button>
+          <button class="btn btn-ghost btn-chip" id="tplCloseBtn" type="button"><span class="mi">close</span>Close</button>
+        </div>
+      </div>
+
+      <!-- List view -->
+      <div id="tplListView">
+        <div class="pill" style="margin-bottom:8px;">Pinned templates appear as chips under the form.</div>
+        <div id="tplList"></div>
+      </div>
+
+      <!-- Editor view -->
+      <div id="tplEditView" hidden>
+        <div class="modal-grid">
+          <div class="col-12 field">
+            <label for="tplName">Template name</label>
+            <input id="tplName" class="input" placeholder="Evening Vape for Sleep">
+          </div>
+          <div class="col-6 field"><label for="tplMethod">Method</label><input id="tplMethod" class="input" placeholder="Vaporized / Oral / etc."></div>
+          <div class="col-6 field"><label for="tplForm">Form</label><input id="tplForm" class="input" placeholder="Vape / Edible / etc."></div>
+          <div class="col-6 field"><label for="tplReason">Reason</label><input id="tplReason" class="input" placeholder="Insomnia / Pain / Anxiety"></div>
+          <div class="col-6 field"><label for="tplEnvironment">Environment</label><input id="tplEnvironment" class="input" placeholder="Home - Evening"></div>
+          <div class="col-6 field"><label for="tplDose">Dose</label><input id="tplDose" class="input" placeholder="5 mg THC + 10 mg CBD"></div>
+          <div class="col-6 field"><label for="tplNotes">Notes</label><input id="tplNotes" class="input" placeholder="Any preset notes"></div>
+          <div class="col-12"><label class="btn btn-chip"><input type="checkbox" id="tplPinned" style="margin-right:8px;">Pin to toolbar</label></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" id="tplCancelEditBtn" type="button">Cancel</button>
+          <button class="btn btn-primary" id="tplSaveBtn" type="button">Save Template</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script>
+/* ---------- Keys & Globals ---------- */
+const KEY="mmj_entries_v1", UI_KEY="mmj_ui_state_v1", DRAFT_KEY="mmj_draft_v1";
+const SETTINGS_KEY="mmj_settings_v1", TPL_KEY="mmj_templates_v1";
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const statusPill=$("#status"), editingBadge=$("#editingBadge");
+const undoToast=$("#undoToast"), undoBtn=$("#undoBtn");
+let editingId=null, undoTimer=null, lastDeleted=null;
+
+/* Safe unique id */
+const uid = () => {
+  try { if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID(); } catch {}
+  return "id_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+};
+
+/* ---------- Storage ---------- */
+function getEntries(){ try{return JSON.parse(localStorage.getItem(KEY))||[];}catch{return[];} }
+function setEntries(a){ localStorage.setItem(KEY, JSON.stringify(a)); }
+function setStatus(msg, cls="pill"){ statusPill.textContent=msg; statusPill.className="pill "+cls; setTimeout(()=>setStatus("Ready"),2200); }
+
+/* ---------- Settings ---------- */
+function getSettings(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { dupPrevent:true, exportFiltered:false }; }catch{ return { dupPrevent:true, exportFiltered:false }; } }
+function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+
+/* ---------- CRC32 for export integrity ---------- */
+const CRC32_TABLE = (()=>{ let c, table=[]; for (let n=0; n<256; n++){ c=n; for (let k=0;k<8;k++){ c = (c&1)? (0xEDB88320 ^ (c>>>1)) : (c>>>1); } table[n]=c; } return table; })();
+function crc32(str){ let crc = 0 ^ (-1); for (let i=0; i<str.length; i++){ crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ str.charCodeAt(i)) & 0xFF]; } return (crc ^ (-1)) >>> 0; }
+
+/* ---------- Dose parsing ---------- */
+function parsePotency(thc_cbd){
+  const res={thcPct:null, cbdPct:null};
+  const mTHC = String(thc_cbd||"").match(/thc\s*([0-9]*\.?[0-9]+)\s*%/i);
+  const mCBD = String(thc_cbd||"").match(/cbd\s*([0-9]*\.?[0-9]+)\s*%/i);
+  if (mTHC) res.thcPct = +mTHC[1];
+  if (mCBD) res.cbdPct = +mCBD[1];
+  return res;
+}
+function parseDoseString(doseStr){
+  const r={mgTHC:null, mgCBD:null, grams:null, mgTotal:null};
+  const s = String(doseStr||"");
+  const mgTHC = s.match(/([0-9]*\.?[0-9]+)\s*mg\s*thc\b/i);
+  const mgCBD = s.match(/([0-9]*\.?[0-9]+)\s*mg\s*cbd\b/i);
+  const mgAny = s.match(/([0-9]*\.?[0-9]+)\s*mg\b(?!\s*(thc|cbd))/i);
+  const g = s.match(/([0-9]*\.?[0-9]+)\s*g(r|ram)?\b/i);
+  if (mgTHC) r.mgTHC = +mgTHC[1];
+  if (mgCBD) r.mgCBD = +mgCBD[1];
+  if (mgAny) r.mgTotal = +mgAny[1];
+  if (g) r.grams = +g[1];
+  return r;
+}
+function computeDoseMg(entry){
+  const potency = parsePotency(entry.thc_cbd||"");
+  const parsed = parseDoseString(entry.dose||"");
+  let mgTHC = parsed.mgTHC, mgCBD = parsed.mgCBD;
+  if (parsed.grams && potency.thcPct!=null) mgTHC = (mgTHC??0) + parsed.grams*1000*(potency.thcPct/100);
+  if (parsed.grams && potency.cbdPct!=null) mgCBD = (mgCBD??0) + parsed.grams*1000*(potency.cbdPct/100);
+  return { mgTHC: (mgTHC!=null? +mgTHC.toFixed(1): null), mgCBD: (mgCBD!=null? +mgCBD.toFixed(1): null) };
+}
+
+/* ---------- Utils ---------- */
+function download(name,content,type="text/plain"){ const blob=new Blob([content],{type}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),0); }
+function localFileDate(){
+  const d=new Date();
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,"0");
+  const day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function localDateStr(d=new Date()){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,"0");
+  const day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+/* ---------- Suggestions ---------- */
+const SPLIT_RE=/[,\/;+&|]/;
+function tokenize(s){ return String(s||"").split(SPLIT_RE).map(t=>t.trim()).filter(t=>t.length>=2); }
+function getRecentTokens(field, n=20){
+  const entries=getEntries(), out=[], seen=new Set();
+  for(let i=entries.length-1;i>=0 && out.length<n;i--){
+    const parts=tokenize(entries[i][field]);
+    for(let j=parts.length-1;j>=0 && out.length<n;j--){
+      const tok=parts[j], key=tok.toLowerCase(); if(seen.has(key)) continue; seen.add(key); out.push(tok);
+    }
+  } return out;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function attachSuggest(inputId, tokensGetter){
+  const input=document.getElementById(inputId);
+  if (input?.parentElement && getComputedStyle(input.parentElement).position === "static") {
+    input.parentElement.style.position = "relative";
+  }
+  const box=document.createElement("div"); box.className="suggest-box"; box.hidden=true; input.after(box);
+  /* ARIA wiring for accessibility */
+  box.setAttribute("role","listbox");
+  box.setAttribute("id", inputId + "-listbox");
+  input.setAttribute("aria-controls", box.id);
+  input.setAttribute("aria-expanded","false");
+
+  let active=-1;
+  function build(){
+    const val=input.value.trim().toLowerCase();
+    const list=[...new Set(tokensGetter())];
+    const filt=val? list.filter(t=>t.toLowerCase().includes(val)) : list;
+    box.innerHTML = (filt.length? filt.slice(0,20).map((t,i)=>`<div class="suggest-item" role="option" aria-selected="${i===active?'true':'false'}">${escapeHtml(t)}</div>`).join("") : `<div class="suggest-empty">No suggestions</div>`);
+    box.hidden = !filt.length; active=-1;
+    input.setAttribute("aria-expanded", String(!box.hidden));
+  }
+  function close(){ box.hidden=true; active=-1; input.setAttribute("aria-expanded","false"); }
+  function choose(text){ input.value=text; input.dispatchEvent(new Event("input")); close(); }
+
+  input.addEventListener("focus", build);
+  input.addEventListener("input", build);
+  input.addEventListener("keydown", (e)=>{
+    const items=[...box.querySelectorAll(".suggest-item")];
+    if(box.hidden || !items.length) return;
+    if(e.key==="ArrowDown"){ e.preventDefault(); active=(active+1)%items.length; items.forEach((it,i)=>it.setAttribute("aria-selected", i===active)); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); active=(active-1+items.length)%items.length; items.forEach((it,i)=>it.setAttribute("aria-selected", i===active)); }
+    else if(e.key==="Enter"){ if(active>=0){ e.preventDefault(); choose(items[active].textContent); } }
+    else if(e.key==="Escape"){ close(); }
+  });
+  box.addEventListener("mousedown", (e)=>{ const it=e.target.closest(".suggest-item"); if(it){ choose(it.textContent); } });
+  document.addEventListener("click",(e)=>{ if(e.target!==input && !box.contains(e.target)) close(); });
+}
+
+/* ---------- Form / Draft ---------- */
+function ensureTodayDefaults(){
+  if(!$("#date").value){ $("#date").value = localDateStr(); }
+  if(!$("#time").value){
+    const d=new Date();
+    $("#time").value=[String(d.getHours()).padStart(2,"0"),String(d.getMinutes()).padStart(2,"0")].join(":");
+  }
+}
+function getFormPartial(){ return {
+  date:$("#date").value,time:$("#time").value,environment:$("#environment").value,
+  strain:$("#strain").value,thc_cbd:$("#thc_cbd").value,form:$("#form").value,method:$("#method").value,
+  dose:$("#dose").value,reason:$("#reason").value,before:$("#before").value,after:$("#after").value,
+  onset:$("#onset").value,duration:$("#duration").value,side_effects:$("#side_effects").value,notes:$("#notes").value
+};}
+function saveDraft(){ localStorage.setItem(DRAFT_KEY, JSON.stringify(getFormPartial())); }
+function loadDraft(){ try{ const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||"null"); if(d) fillForm(d);}catch{} }
+function clearDraft(){ localStorage.removeItem(DRAFT_KEY); }
+
+function readForm(){
+  const date = $("#date").value || localDateStr();
+  const time = $("#time").value || new Date().toTimeString().slice(0,5);
+  const before=parseInt($("#before").value,10);
+  const after=parseInt($("#after").value,10);
+  const relief=(isFinite(before)&&isFinite(after))? (before-after):null;
+  return {
+    id: uid(),
+    date,time,
+    environment:$("#environment").value.trim(),
+    strain:$("#strain").value.trim(),
+    thc_cbd:$("#thc_cbd").value.trim(),
+    form:$("#form").value,
+    method:$("#method").value,
+    dose:$("#dose").value.trim(),
+    reason:$("#reason").value.trim(),
+    before,after,relief,
+    onset: $("#onset").value? Number($("#onset").value):null,
+    duration: $("#duration").value? Number($("#duration").value):null,
+    side_effects:$("#side_effects").value.trim(),
+    notes:$("#notes").value.trim(),
+    createdAt: Date.now()
+  };
+}
+function fillForm(e){
+  $("#date").value=e.date||""; $("#time").value=e.time||"";
+  $("#environment").value=e.environment||"";
+  $("#strain").value=e.strain||""; $("#thc_cbd").value=e.thc_cbd||"";
+  $("#form").value=e.form||""; $("#method").value=e.method||"";
+  $("#dose").value=e.dose||""; $("#reason").value=e.reason||"";
+  $("#before").value=(e.before ?? ""); $("#after").value=(e.after ?? "");
+  $("#onset").value=(e.onset ?? ""); $("#duration").value=(e.duration ?? "");
+  $("#side_effects").value=e.side_effects||""; $("#notes").value=e.notes||"";
+  updateReliefPreview();
+}
+function clearForm(){
+  $$('#trackerForm input, #trackerForm textarea, #trackerForm select').forEach(el=>{ if(el.type!=="date" && el.type!=="time"){ el.value=""; } el.classList.remove("error"); });
+  updateReliefPreview(); endEdit(); saveDraft();
+}
+
+/* ---------- Edit mode ---------- */
+function setSaveBtnLabel(txt){ const btn=$('#saveBtn'); const label=btn.querySelector('.btn-label'); if(label){ label.textContent=txt; } }
+function startEdit(entry){ fillForm(entry); editingId=entry.id; setSaveBtnLabel('Update'); $("#editingBadge").style.display=""; setStatus("Loaded for edit"); }
+function endEdit(){ editingId=null; setSaveBtnLabel('Save'); $("#editingBadge").style.display="none"; }
+
+/* ---------- Validation ---------- */
+const requiredFields=["#date","#time","#strain","#thc_cbd","#form","#method","#dose","#reason","#before","#after"];
+function validateForm(){
+  requiredFields.forEach(sel=>$(sel).classList.remove("error"));
+  let firstBad=null;
+  const need=["#date","#time","#strain","#thc_cbd","#dose","#reason"];
+  for(const sel of need){ if(!$(sel).value.trim()){ $(sel).classList.add("error"); if(!firstBad) firstBad=$(sel); } }
+  if(!$("#form").value){ $("#form").classList.add("error"); if(!firstBad) firstBad=$("#form"); }
+  if(!$("#method").value){ $("#method").classList.add("error"); if(!firstBad) firstBad=$("#method"); }
+  const b=parseInt($("#before").value,10), a=parseInt($("#after").value,10);
+  if(!isFinite(b)||b<0||b>10){ $("#before").classList.add("error"); if(!firstBad) firstBad=$("#before"); }
+  if(!isFinite(a)||a<0||a>10){ $("#after").classList.add("error"); if(!firstBad) firstBad=$("#after"); }
+  if(firstBad){ firstBad.scrollIntoView({behavior:"smooth",block:"center"}); firstBad.focus(); setStatus("Please complete highlighted fields","pill bad"); return false; }
+  return true;
+}
+function attachErrorClearing(){ requiredFields.forEach(sel=>{ const el=$(sel); const evt=(el.tagName==="SELECT")?"change":"input"; el.addEventListener(evt, ()=>el.classList.remove("error")); }); }
+
+/* ---------- Relief preview ---------- */
+function updateReliefPreview(){
+  const b=parseInt($("#before").value,10), a=parseInt($("#after").value,10), span=$("#reliefPreview");
+  if(isFinite(b)&&isFinite(a)){ const r=b-a; span.textContent=`Relief: ${r}`; span.className=`pill ${r>0?'ok':(r===0?'warn':'bad')}`; }
+  else { span.textContent="Relief: —"; span.className="pill"; }
+}
+
+/* ---------- Duplicate detection ---------- */
+function isNearDuplicate(entry){
+  const entries = getEntries();
+  const norm = s => String(s||"").trim().toLowerCase();
+  const timeToMin = t => { const [h,m]=String(t||"00:00").split(":").map(Number); return h*60 + (m||0); };
+  const tmin = timeToMin(entry.time);
+  const date = entry.date;
+  const strain = norm(entry.strain);
+  const method = norm(entry.method);
+  const WINDOW_MIN = 15;
+  return entries.some(e=>{
+    if (editingId && e.id === editingId) return false;
+    if (e.date !== date) return false;
+    if (norm(e.strain) !== strain) return false;
+    if (norm(e.method) !== method) return false;
+    return Math.abs(timeToMin(e.time) - tmin) <= WINDOW_MIN;
+  });
+}
+
+/* ---------- UI state ---------- */
+function saveUIState(){
+  const s={search:$("#search").value, filterMethod:$("#filterMethod").value, filterForm:$("#filterForm").value,
+    filterFrom:$("#filterFrom").value, filterTo:$("#filterTo").value, sortBy:$("#sortBy").value, summaryRange:$("#summaryRange").value};
+  localStorage.setItem(UI_KEY, JSON.stringify(s));
+}
+function loadUIState(){
+  try{ const s=JSON.parse(localStorage.getItem(UI_KEY)||"null"); if(!s) return;
+    $("#search").value=s.search||""; $("#filterMethod").value=s.filterMethod||""; $("#filterForm").value=s.filterForm||"";
+    $("#filterFrom").value=s.filterFrom||""; $("#filterTo").value=s.filterTo||""; $("#sortBy").value=s.sortBy||"date_desc";
+    $("#summaryRange").value=s.summaryRange||"30";
+  }catch{}
+}
+
+/* ---------- Filtering ---------- */
+function getFilteredEntries(){
+  const q=$("#search").value.toLowerCase(), fM=$("#filterMethod").value, fF=$("#filterForm").value, fFrom=$("#filterFrom").value, fTo=$("#filterTo").value;
+  return getEntries().filter(e=>{
+    if(fFrom && e.date && e.date < fFrom) return false;
+    if(fTo && e.date && e.date > fTo) return false;
+    const hay=[e.strain,e.reason,e.notes,e.side_effects,e.environment].join(" ").toLowerCase();
+    const passQ=!q || hay.includes(q);
+    const passM=!fM || e.method===fM;
+    const passF=!fF || e.form===fF;
+    return passQ && passM && passF;
+  });
+}
+
+/* ---------- Table ---------- */
+function renderTable(){
+  const tbody=$("#table tbody"); tbody.innerHTML="";
+  const sort=$("#sortBy").value; const rows=getFilteredEntries().slice();
+  rows.sort((a,b)=>{
+    if(sort==="date_desc") return (b.date+b.time).localeCompare(a.date+a.time);
+    if(sort==="date_asc") return (a.date+a.time).localeCompare(b.date+b.time);
+    if(sort==="relief_desc") return ((b.relief??-1)-(a.relief??-1));
+    if(sort==="relief_asc") return ((a.relief??1e9)-(b.relief??1e9));
+    return 0;
+  });
+  for(const e of rows){
+    const tr=document.createElement("tr");
+    const cls=e.relief>0?'ok':(e.relief===0?'warn':'bad');
+    const reliefPill=`<span class="pill ${e.relief==null?'':cls}">${e.relief ?? ""}</span>`;
+    tr.innerHTML=`
+      <td>${escapeHtml(e.date)}</td>
+      <td>${escapeHtml(e.time)}</td>
+      <td>${escapeHtml(e.strain)}</td>
+      <td>${escapeHtml(e.thc_cbd)}</td>
+      <td>${escapeHtml(e.form)}</td>
+      <td>${escapeHtml(e.method)}</td>
+      <td>${escapeHtml(e.dose)}</td>
+      <td>${escapeHtml(e.reason)}</td>
+      <td>${e.before ?? ""}</td>
+      <td>${e.after ?? ""}</td>
+      <td>${reliefPill}</td>
+      <td>${e.onset ?? ""}</td>
+      <td>${e.duration ?? ""}</td>
+      <td>${escapeHtml(e.side_effects||"")}</td>
+      <td>${escapeHtml(e.environment||"")}</td>
+      <td>${escapeHtml(e.notes||"")}</td>
+      <td>
+        <button class="btn btn-chip" data-act="edit" data-id="${e.id}" type="button"><span class="mi">edit</span></button>
+        <button class="btn btn-chip" data-act="dup" data-id="${e.id}" type="button"><span class="mi">content_copy</span></button>
+        <button class="btn btn-chip btn-danger" data-act="del" data-id="${e.id}" type="button"><span class="mi">delete</span></button>
+      </td>`;
+    tbody.appendChild(tr);
+  }
+  $("#countPill").textContent=`${rows.length} / ${getEntries().length}`;
+
+  const r=rows.filter(e=>e.relief!=null).map(e=>e.relief);
+  const avgRelief=r.length? (r.reduce((a,b)=>a+b,0)/r.length).toFixed(2):"—";
+  const thcVals = rows.map(e=>computeDoseMg(e).mgTHC).filter(v=>v!=null);
+  const avgTHC = thcVals.length? (thcVals.reduce((a,b)=>a+b,0)/thcVals.length).toFixed(1) : "—";
+  $("#quickStats").innerHTML=
+    `<span class="pill">Visible: ${rows.length}</span>`+
+    `<span class="pill">Avg relief: ${avgRelief}</span>`+
+    `<span class="pill">Avg THC (mg): ${avgTHC}</span>`;
+}
+
+/* ---------- Charts (filter-aware) ---------- */
+function groupAvgReliefByTokens(entries, field){ const m={}; for(const e of entries){ if(e.relief==null) continue; tokenize(e[field]).forEach(t=>{ (m[t]||(m[t]={sum:0,n:0})).sum+=e.relief; m[t].n++; }); } const labels=Object.keys(m); const data=labels.map(k=>+(m[k].sum/m[k].n).toFixed(2)); return {labels,data}; }
+function groupAvgReliefByField(entries, field){ const m={}; for(const e of entries){ if(e.relief==null) continue; const k=e[field]; if(!k) continue; (m[k]||(m[k]={sum:0,n:0})).sum+=e.relief; m[k].n++; } const labels=Object.keys(m); const data=labels.map(k=>+(m[k].sum/m[k].n).toFixed(2)); return {labels,data}; }
+function groupCountByTokens(entries, field, topN=null){ const m={}; for(const e of entries){ tokenize(e[field]).forEach(t=>{ m[t]=(m[t]||0)+1; }); } let pairs=Object.entries(m).sort((a,b)=>b[1]-a[1]); if(topN) pairs=pairs.slice(0,topN); return {labels:pairs.map(p=>p[0]), data:pairs.map(p=>p[1])}; }
+function groupCountByField(entries, field){ const m={}; for(const e of entries){ const k=e[field]; if(k) m[k]=(m[k]||0)+1; } return {labels:Object.keys(m), data:Object.values(m)}; }
+function dailyAvgRelief(entries){ const m={}; for(const e of entries){ if(e.relief==null||!e.date) continue; (m[e.date]||(m[e.date]={sum:0,n:0})).sum+=e.relief; m[e.date].n++; } const dates=Object.keys(m).sort(); const data=dates.map(d=>+(m[d].sum/m[d].n).toFixed(2)); return {labels:dates, data}; }
+let chartDaily, chartReliefStrain, chartReliefMethod, chartReliefReason, chartMethod, chartForm, chartSideFx, chartEnv;
+function rebuildCharts(){
+  const entries=getFilteredEntries();
+  if(typeof window.Chart==="undefined") return;
+  const mk=(old,id,cfg)=>{ if(old) old.destroy(); return new Chart(document.getElementById(id), cfg); };
+  chartDaily = mk(chartDaily, "dailyReliefTrend", (()=>{
+    const {labels,data}=dailyAvgRelief(entries);
+    return {type:"line", data:{labels,datasets:[{label:"Avg Relief",data}]}, options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}};
+  })());
+  chartReliefStrain = mk(chartReliefStrain,"reliefByStrain",(()=>{
+    const {labels,data}=groupAvgReliefByTokens(entries,"strain");
+    return {type:"bar", data:{labels,datasets:[{label:"Avg Relief",data}]}, options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}};
+  })());
+  chartReliefMethod = mk(chartReliefMethod,"reliefByMethod",(()=>{
+    const {labels,data}=groupAvgReliefByField(entries,"method");
+    return {type:"bar", data:{labels,datasets:[{label:"Avg Relief",data}]}, options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}};
+  })());
+  chartReliefReason = mk(chartReliefReason,"reliefByReason",(()=>{
+    const {labels,data}=groupAvgReliefByTokens(entries,"reason");
+    return {type:"bar", data:{labels,datasets:[{label:"Avg Relief",data}]}, options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}};
+  })());
+  chartMethod = mk(chartMethod,"methodShare",(()=>{
+    const {labels,data}=groupCountByField(entries,"method");
+    return {type:"doughnut", data:{labels,datasets:[{label:"Sessions",data}]}, options:{responsive:true,plugins:{legend:{position:"bottom"}}}};
+  })());
+  chartForm = mk(chartForm,"formShare",(()=>{
+    const {labels,data}=groupCountByField(entries,"form");
+    return {type:"doughnut", data:{labels,datasets:[{label:"Sessions",data}]}, options:{responsive:true,plugins:{legend:{position:"bottom"}}}};
+  })());
+  chartSideFx = mk(chartSideFx,"sideEffectsFreq",(()=>{
+    const {labels,data}=groupCountByTokens(entries,"side_effects",10);
+    return {type:"bar", data:{labels,datasets:[{label:"Count",data}]}, options:{responsive:true,indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}};
+  })());
+  chartEnv = mk(chartEnv,"environmentFreq",(()=>{
+    const {labels,data}=groupCountByTokens(entries,"environment");
+    return {type:"bar", data:{labels,datasets:[{label:"Count",data}]}, options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}};
+  })());
+}
+
+/* ---------- CSV/JSON Export ---------- */
+function toCSV(arr){ const entries=arr||getEntries(); const cols=["date","time","strain","thc_cbd","form","method","dose","reason","before","after","relief","onset","duration","side_effects","environment","notes"]; const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`; const lines=[cols.join(",")]; for(const e of entries){ lines.push(cols.map(k=>esc(e[k])).join(",")); } return lines.join("\n"); }
+
+/* ---------- Templates ---------- */
+function defaultTemplates(){
+  return [
+    {id: uid(), name:"Evening Vape for Sleep", pinned:true,
+      fields:{method:"Vaporized", form:"Vape", reason:"Insomnia / Sleep", environment:"Home - Evening", dose:"5 mg THC", notes:"Evening template"},
+      createdAt:Date.now()
+    },
+    {id: uid(), name:"Daytime Microdose for Pain", pinned:false,
+      fields:{method:"Oral", form:"Edible", reason:"Pain", environment:"Daytime", dose:"2.5 mg THC + 5 mg CBD", notes:"Day microdose"},
+      createdAt:Date.now()
+    }
+  ];
+}
+function getTemplates(){
+  try{
+    const t = JSON.parse(localStorage.getItem(TPL_KEY) || "null");
+    if(Array.isArray(t) && t.length) return t;
+    const d = defaultTemplates(); localStorage.setItem(TPL_KEY, JSON.stringify(d)); return d;
+  }catch{ const d=defaultTemplates(); localStorage.setItem(TPL_KEY, JSON.stringify(d)); return d; }
+}
+function setTemplates(arr){ localStorage.setItem(TPL_KEY, JSON.stringify(arr)); renderPinnedTemplates(); }
+function renderPinnedTemplates(){
+  const bar = $("#templatesBar");
+  [...bar.querySelectorAll("button[data-tpl-id]")].forEach(b=>b.remove());
+  const pinned = getTemplates().filter(t=>t.pinned);
+  const anchor = $("#saveAsTemplateBtn");
+  for(const t of pinned){
+    const b=document.createElement("button");
+    b.className="btn btn-chip btn-tonal";
+    b.type="button";
+    b.dataset.tplId=t.id;
+    b.textContent=t.name;
+    b.title="Apply template";
+    b.addEventListener("click",()=>applyTemplate(t));
+    bar.insertBefore(b, anchor);
+  }
+}
+function applyTemplate(t){
+  if(!t) return;
+  const f=t.fields||{};
+  const set=(id,val)=>{ if(val){ const el=document.getElementById(id); if(el) el.value=val; } };
+  set("method",f.method); set("form",f.form); set("reason",f.reason);
+  set("environment",f.environment); set("dose",f.dose); set("notes",f.notes);
+  setStatus(`Template applied: ${t.name}`,"pill ok");
+}
+
+/* ---------- Template Modal (CRUD) ---------- */
+function openTplModal(){ const m=$("#tplModal"); renderTplList(); showTplListView(); m.hidden=false; m.classList.add("is-open"); document.body.style.overflow="hidden"; }
+function closeTplModal(){ const m=$("#tplModal"); m.classList.remove("is-open"); m.hidden=true; document.body.style.overflow=""; }
+function showTplListView(){ $("#tplListView").hidden=false; $("#tplEditView").hidden=true; }
+function showTplEditView(){ $("#tplListView").hidden=true; $("#tplEditView").hidden=false; }
+let tplEditingId=null;
+function renderTplList(){
+  const box=$("#tplList");
+  const list=getTemplates().slice().sort((a,b)=> (b.pinned - a.pinned) || a.name.localeCompare(b.name));
+  box.innerHTML="";
+  if(!list.length){ box.innerHTML='<div class="pill">No templates yet. Click “New Template”.</div>'; return; }
+  for(const t of list){
+    const row=document.createElement("div");
+    row.className="card"; row.style.marginBottom="10px";
+    const preview=Object.entries(t.fields)
+      .filter(([k,v])=>v)
+      .map(([k,v])=>`${k}: ${escapeHtml(v)}`)
+      .slice(0,4).join(" · ");
+    row.innerHTML=`
+      <div class="controls" style="justify-content:space-between;">
+        <div style="min-width:0;">
+          <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            ${escapeHtml(t.name)}${t.pinned? ' <span class="pill" style="margin-left:6px;">Pinned</span>': ''}
+          </div>
+          <div style="opacity:.85; font-size:.92rem; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            ${preview || '<span class="pill">No preset fields</span>'}
+          </div>
+        </div>
+        <div class="controls">
+          <button class="btn btn-chip" data-act="apply" data-id="${t.id}"><span class="mi">play_arrow</span>Apply</button>
+          <button class="btn btn-chip" data-act="edit" data-id="${t.id}"><span class="mi">edit</span>Edit</button>
+          <button class="btn btn-chip" data-act="pin" data-id="${t.id}">${t.pinned?'<span class="mi">star</span>Unpin':'<span class="mi">star</span>Pin'}</button>
+          <button class="btn btn-chip btn-danger" data-act="del" data-id="${t.id}"><span class="mi">delete</span>Delete</button>
+        </div>
+      </div>`;
+    box.appendChild(row);
+  }
+}
+function loadTemplateEditor(t){ tplEditingId=t?.id||null;
+  $("#tplName").value = t?.name || "";
+  $("#tplPinned").checked = !!t?.pinned;
+  $("#tplMethod").value = t?.fields?.method || "";
+  $("#tplForm").value = t?.fields?.form || "";
+  $("#tplReason").value = t?.fields?.reason || "";
+  $("#tplEnvironment").value = t?.fields?.environment || "";
+  $("#tplDose").value = t?.fields?.dose || "";
+  $("#tplNotes").value = t?.fields?.notes || "";
+}
+function readTemplateEditor(){
+  return {
+    name: $("#tplName").value.trim(),
+    pinned: $("#tplPinned").checked,
+    fields: {
+      method: $("#tplMethod").value.trim(),
+      form: $("#tplForm").value.trim(),
+      reason: $("#tplReason").value.trim(),
+      environment: $("#tplEnvironment").value.trim(),
+      dose: $("#tplDose").value.trim(),
+      notes: $("#tplNotes").value.trim()
+    }
+  };
+}
+
+/* ---------- Doctor Summary ---------- */
+function filterByRange(entries, range){ if(range==="all") return entries; const days=Number(range)||30; const now=new Date(), cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-days); return entries.filter(e=>{ if(!e.date) return false; const [y,m,d]=e.date.split("-").map(Number); const dt=new Date(y,(m||1)-1,d||1); return dt>=cutoff; }); }
+function avg(a){ return a.length? a.reduce((x,y)=>x+y,0)/a.length : null; }
+function fmt(n,d=2){ return (n==null||isNaN(n))?"—":Number(n).toFixed(d); }
+function topList(mapObj,n=5,withAvg=false){ let arr=Array.isArray(mapObj)?mapObj:Object.entries(mapObj); arr.sort((a,b)=>b[1].count-a[1].count); arr=arr.slice(0,n); return arr.map(([k,v])=>withAvg?`• ${k}: ${v.count} (avg relief ${fmt(v.avg,2)})`:`• ${k}: ${v.count}`).join("\n"); }
+function generateDoctorSummary(range="30"){
+  const all=getEntries(), entries=filterByRange(all,range), total=entries.length;
+  const beforeVals=entries.filter(e=>e.before!=null).map(e=>e.before), afterVals=entries.filter(e=>e.after!=null).map(e=>e.after), reliefVals=entries.filter(e=>e.relief!=null).map(e=>e.relief);
+  const avgBefore=avg(beforeVals), avgAfter=avg(afterVals), avgRelief=avg(reliefVals);
+  const onsetAvg=avg(entries.filter(e=>e.onset!=null).map(e=>e.onset)), durationAvg=avg(entries.filter(e=>e.duration!=null).map(e=>e.duration));
+  const methodMap={}, formMap={}; for(const e of entries){ if(e.method){methodMap[e.method]=(methodMap[e.method]||0)+1;} if(e.form){formMap[e.form]=(formMap[e.form]||0)+1;} }
+  const strainStats={}, reasonStats={}, sideFx={};
+  for(const e of entries){
+    tokenize(e.strain).forEach(t=>{ (strainStats[t]||(strainStats[t]={count:0,reliefs:[]})).count++; if(e.relief!=null) strainStats[t].reliefs.push(e.relief); });
+    tokenize(e.reason).forEach(t=>{ (reasonStats[t]||(reasonStats[t]={count:0,reliefs:[]})).count++; if(e.relief!=null) reasonStats[t].reliefs.push(e.relief); });
+    tokenize(e.side_effects).forEach(t=>{ sideFx[t]=(sideFx[t]||0)+1; });
+  }
+  const strainSummary=Object.fromEntries(Object.entries(strainStats).map(([k,v])=>[k,{count:v.count,avg:avg(v.reliefs)}]));
+  const reasonSummary=Object.fromEntries(Object.entries(reasonStats).map(([k,v])=>[k,{count:v.count,avg:avg(v.reliefs)}]));
+  const sideFxTop=Object.entries(sideFx).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>`• ${k}: ${v}`).join("\n");
+  let dateRangeTxt="All time"; if(range!=="all"&&entries.length){ const ds=entries.map(e=>e.date).sort(); dateRangeTxt=`${ds[0]} → ${ds[ds.length-1]}`; }
+  const lines=[]; lines.push(`Medication Usage Summary (${dateRangeTxt})`);
+  lines.push(`Total sessions: ${total}`);
+  lines.push(`Average symptom scores: before ${fmt(avgBefore,2)} → after ${fmt(avgAfter,2)} (avg relief ${fmt(avgRelief,2)})`);
+  lines.push(`Average onset: ${fmt(onsetAvg,1)} min; Average duration: ${fmt(durationAvg,1)} h`);
+  lines.push(""); lines.push("Most-used methods:"); lines.push(topList(Object.entries(methodMap).reduce((a,[k,c])=>{a[k]={count:c};return a;},{}),5,false)||"• —");
+  lines.push(""); lines.push("Most-used forms:"); lines.push(topList(Object.entries(formMap).reduce((a,[k,c])=>{a[k]={count:c};return a;},{}),5,false)||"• —");
+  lines.push(""); lines.push("Top strains (by token):"); lines.push(topList(Object.entries(strainSummary),5,true)||"• —");
+  lines.push(""); lines.push("Top reasons/symptoms (by token):"); lines.push(topList(Object.entries(reasonSummary),5,true)||"• —");
+  lines.push(""); lines.push("Most common side effects (tokens):"); lines.push(sideFxTop||"• —");
+  lines.push(""); lines.push("Notes:"); lines.push("• This summary aggregates self-reported data. Dosage strings aren’t parsed numerically."); lines.push("• Relief = Before – After (positive means improvement).");
+  return lines.join("\n");
+}
+
+/* ---------- Charts helpers ---------- */
+function rebuildAll(){ renderTable(); rebuildCharts(); }
+
+/* ---------- Init & Events ---------- */
+document.addEventListener("DOMContentLoaded", ()=>{
+  // Form element wrapper
+  const formWrap=document.createElement("form"); formWrap.id="trackerForm"; formWrap.addEventListener("submit", e=>e.preventDefault());
+  const formSection=document.getElementById("formGrid"); formSection.parentNode.insertBefore(formWrap, formSection); formWrap.appendChild(formSection);
+
+  // Suggestions
+  attachSuggest("strain", ()=>getRecentTokens("strain"));
+  attachSuggest("thc_cbd", ()=>getRecentTokens("thc_cbd"));
+  attachSuggest("dose", ()=>getRecentTokens("dose"));
+  attachSuggest("reason", ()=>getRecentTokens("reason"));
+  attachSuggest("environment", ()=>getRecentTokens("environment"));
+  attachSuggest("side_effects", ()=>getRecentTokens("side_effects"));
+
+  ensureTodayDefaults();
+  attachErrorClearing();
+  $("#trackerForm").addEventListener("input", ()=>{ saveDraft(); updateReliefPreview(); });
+  $("#before").addEventListener("input", updateReliefPreview);
+  $("#after").addEventListener("input", updateReliefPreview);
+
+  loadUIState();
+  try{ const s=getSettings(); $("#dupPrevent").checked=!!s.dupPrevent; $("#exportFiltered").checked=!!s.exportFiltered; }catch{}
+  loadDraft();
+
+  renderPinnedTemplates();
+  rebuildAll();
+
+  // Save / Update
+  $("#saveBtn").addEventListener("click", ()=>{
+    if(!validateForm()) return;
+    const data=readForm();
+    const s=getSettings();
+    if (s.dupPrevent && isNearDuplicate(data)){
+      const ok=confirm("This looks like a near-duplicate (same date/strain/method within ~15 min). Save anyway?");
+      if(!ok){ setStatus("Save canceled","pill warn"); return; }
+    }
+    if(editingId){
+      const entries=getEntries(); const idx=entries.findIndex(x=>x.id===editingId);
+      if(idx>=0){ data.id=editingId; data.createdAt=entries[idx].createdAt ?? data.createdAt; entries[idx]=data; setEntries(entries); setStatus("Updated ✓","pill ok"); }
+      else{ const arr=getEntries(); arr.push(data); setEntries(arr); setStatus("Saved ✓ (entry not found; added new)","pill warn"); }
+      endEdit();
+    } else {
+      const entries=getEntries(); entries.push(data); setEntries(entries); setStatus("Saved ✓","pill ok");
+    }
+    clearDraft();
+    rebuildAll();
+    clearForm(); ensureTodayDefaults();
+    saveUIState();
+  });
+
+  $("#newBtn").addEventListener("click", ()=>{ clearForm(); ensureTodayDefaults(); setStatus("Form cleared","pill"); });
+
+  // Table actions
+  $("#table").addEventListener("click", (e)=>{
+    const btn=e.target.closest("button"); if(!btn) return;
+    const id=btn.dataset.id, act=btn.dataset.act;
+    const entries=getEntries(); const idx=entries.findIndex(x=>x.id===id); if(idx<0) return;
+    if(act==="edit"){ startEdit(entries[idx]); }
+    if(act==="dup"){ const copy={...entries[idx]}; delete copy.id; endEdit(); fillForm(copy); setStatus("Loaded copy — edit and Save to add","pill"); }
+    if(act==="del"){
+      if(confirm("Delete this entry?")){
+        lastDeleted=entries[idx]; entries.splice(idx,1); setEntries(entries);
+        rebuildAll(); setStatus("Deleted","pill bad"); if(editingId===id) endEdit(); showUndoToast();
+      }
+    }
+  });
+
+  // Filters
+  ["search","filterMethod","filterForm","filterFrom","filterTo","sortBy"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", ()=>{ saveUIState(); rebuildAll(); });
+  });
+  $("#clearFiltersBtn").addEventListener("click", ()=>{ $("#search").value=""; $("#filterMethod").value=""; $("#filterForm").value=""; $("#filterFrom").value=""; $("#filterTo").value=""; saveUIState(); rebuildAll(); });
+
+  // Export / Import (with checksum)
+  $("#exportJsonBtn").addEventListener("click", ()=>{
+    const useFiltered = $("#exportFiltered").checked;
+    const entries = useFiltered? getFilteredEntries() : getEntries();
+    const canon = JSON.stringify(entries);
+    const checksum = crc32(canon).toString(16).padStart(8,"0");
+    const wrapper = { type:"mmj-export-v2", createdAt: Date.now(), count: entries.length, checksum, entries };
+    download(`meds_entries_${localFileDate()}${useFiltered?"_filtered":""}.json`, JSON.stringify(wrapper,null,2), "application/json");
+  });
+  // CSV Export (respects "Export filtered only")
+  $("#exportCsvBtn").addEventListener("click", ()=>{
+    const useFiltered = $("#exportFiltered").checked;
+    const entries = useFiltered ? getFilteredEntries() : getEntries();
+    const csv = toCSV(entries);
+    download(`meds_entries_${localFileDate()}${useFiltered ? "_filtered" : ""}.csv`, csv, "text/csv");
+  });
+
+  $("#importJson").addEventListener("change", async (ev)=>{
+    const f=ev.target.files?.[0]; if(!f) return;
+    try{
+      const text = await f.text();
+      let data = JSON.parse(text);
+      let incomingArr = null;
+      if (Array.isArray(data)){ incomingArr = data; }
+      else if (data && Array.isArray(data.entries)){
+        const canon = JSON.stringify(data.entries);
+        const calc = crc32(canon).toString(16).padStart(8,"0");
+        if (data.checksum && data.checksum !== calc){
+          throw new Error("Checksum mismatch. File may be corrupted or partially synced.");
+        }
+        incomingArr = data.entries;
+      } else { throw new Error("Invalid JSON"); }
+      const existing = getEntries();
+      const map = new Map(existing.map(e=>[e.id,e]));
+      for(const e of incomingArr){ if(!e.id) e.id = uid(); map.set(e.id, e); }
+      setEntries(Array.from(map.values()));
+      rebuildAll(); setStatus("Imported ✓","pill ok"); endEdit();
+    }catch(err){ console.error(err); setStatus(err?.message || "Import failed","pill bad"); }
+    finally{ ev.target.value=""; }
+  });
+
+  $("#resetBtn").addEventListener("click", ()=>{ if(confirm("This will delete ALL entries in this browser. Continue?")){ localStorage.removeItem(KEY); rebuildAll(); setStatus("All data erased","pill bad"); endEdit(); clearDraft(); } });
+
+  // Doctor Summary
+  $("#genSummaryBtn").addEventListener("click", ()=>{ const range=$("#summaryRange").value; $("#summaryText").value=generateDoctorSummary(range); saveUIState(); });
+  $("#copySummaryBtn").addEventListener("click", async ()=>{ const txt=$("#summaryText").value||""; try{ await navigator.clipboard.writeText(txt); setStatus("Summary copied ✓","pill ok"); }catch{ setStatus("Copy failed","pill bad"); }});
+  $("#downloadSummaryBtn").addEventListener("click", ()=>{ const txt=$("#summaryText").value||""; const range=$("#summaryRange").value; download(`doctor_summary_${range==='all'?'all':range+'d'}.txt`, txt, "text/plain"); });
+
+  // Template modal
+  $("#manageTemplatesBtn").addEventListener("click", openTplModal);
+  $("#tplCloseBtn").addEventListener("click", closeTplModal);
+  $("#tplNewBtn").addEventListener("click", ()=>{ loadTemplateEditor(null); showTplEditView(); });
+  $("#tplCancelEditBtn").addEventListener("click", ()=>{ loadTemplateEditor(null); showTplListView(); });
+  $("#tplSaveBtn").addEventListener("click", ()=>{
+    const data = readTemplateEditor();
+    if(!data.name){ $("#tplName").classList.add("error"); $("#tplName").focus(); return; }
+    const arr = getTemplates();
+    if(tplEditingId){
+      const idx = arr.findIndex(t=>t.id===tplEditingId);
+      if(idx>=0){ arr[idx] = {...arr[idx], ...data, id:tplEditingId}; setTemplates(arr); }
+    }else{
+      arr.push({ id: uid(), name:data.name, pinned:!!data.pinned, fields:data.fields, createdAt:Date.now() });
+      setTemplates(arr);
+    }
+    renderTplList(); renderPinnedTemplates(); showTplListView(); setStatus("Template saved ✓","pill ok");
+  });
+  $("#tplList").addEventListener("click",(e)=>{
+    const btn=e.target.closest("button[data-act]"); if(!btn) return;
+    const id=btn.dataset.id, act=btn.dataset.act;
+    const arr=getTemplates(); const idx=arr.findIndex(t=>t.id===id); if(idx<0) return;
+    if(act==="apply"){ applyTemplate(arr[idx]); closeTplModal(); }
+    if(act==="edit"){ tplEditingId=id; loadTemplateEditor(arr[idx]); showTplEditView(); }
+    if(act==="pin"){ arr[idx].pinned = !arr[idx].pinned; setTemplates(arr); renderTplList(); renderPinnedTemplates(); }
+    if(act==="del"){
+      if(confirm("Delete this template?")){ arr.splice(idx,1); setTemplates(arr); renderTplList(); renderPinnedTemplates(); setStatus("Template deleted","pill bad"); }
+    }
+  });
+  // Modal UX: start closed, backdrop click & Esc to close
+  closeTplModal();
+  $("#tplModal").addEventListener("click", (e)=>{ if (e.target.id === "tplModal") closeTplModal(); });
+  document.addEventListener("keydown", (e)=>{ if (e.key === "Escape" && !$("#tplModal").hidden) closeTplModal(); });
+
+  // Settings toggles
+  $("#dupPrevent").addEventListener("change",(e)=>{ const s=getSettings(); s.dupPrevent=e.target.checked; saveSettings(s); });
+  $("#exportFiltered").addEventListener("change",(e)=>{ const s=getSettings(); s.exportFiltered=e.target.checked; saveSettings(s); });
+
+  // Shortcuts
+  document.addEventListener("keydown",(e)=>{
+    const isInput=["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName);
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){ e.preventDefault(); $("#saveBtn").click(); }
+    if(!isInput && e.key==="/"){ e.preventDefault(); $("#search").focus(); }
+  });
+
+  // Unload guard
+  window.addEventListener("beforeunload",(e)=>{ const draft=localStorage.getItem(DRAFT_KEY); if(editingId || (draft && draft!=="{}")){ e.preventDefault(); e.returnValue=""; } });
+});
+
+/* ---------- Undo Delete ---------- */
+function showUndoToast(){ undoToast.style.display="flex"; clearTimeout(undoTimer); undoTimer=setTimeout(()=>{ undoToast.style.display="none"; lastDeleted=null; },6000); }
+undoBtn.addEventListener("click", ()=>{ if(lastDeleted){ const entries=getEntries(); entries.push(lastDeleted); setEntries(entries); rebuildAll(); setStatus("Restored ✓","pill ok"); lastDeleted=null; undoToast.style.display="none"; clearTimeout(undoTimer); }});
+</script>
+
+<!-- Minimal service worker registration for iOS/PWA install -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
+  });
+}
+</script>
+</body>
+</html>
