@@ -602,7 +602,7 @@ function ensureTodayDefaults(){
     const d=new Date();
     $("#time").value=[String(d.getHours()).padStart(2,"0"),String(d.getMinutes()).padStart(2,"0")].join(":");
   }
-}
+}  
 function getFormPartial(){ return {
   date:$("#date").value,time:$("#time").value,environment:$("#environment").value,
   strain:$("#strain").value,thc_cbd:$("#thc_cbd").value,form:$("#form").value,method:$("#method").value,
