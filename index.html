@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Medication Tracker</title>
 
-<!-- PWA / Icons -->
+<!-- Manifest / Icons -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-256.png">
 <link rel="icon" href="icon-256.png"/>
@@ -17,6 +17,7 @@
 
 <style>
   :root{
+    /* Dark (default) */
     --md-sys-color-primary:#8b5cf6;
     --md-sys-color-primary-variant:#7c3aed;
     --md-sys-color-secondary:#94a3b8;
@@ -36,7 +37,15 @@
     --sec-entries:#14b8a6;
     --sec-summary:#38bdf8;
 
-    color-scheme: dark light;
+    color-scheme: dark;
+  }
+  /* Light theme */
+  [data-theme="light"]{
+    --md-sys-color-surface:#ffffff;
+    --md-sys-color-surface-variant:#f6f7fb;
+    --md-sys-color-on-surface:#111827;
+    --md-sys-color-outline:#e5e7eb;
+    color-scheme: light;
   }
 
   *{box-sizing:border-box}
@@ -74,6 +83,7 @@
     border-radius:var(--radius);
     box-shadow: var(--shadow-1);
     padding: var(--space-4);
+    overflow:hidden; /* keep children within rounded corners */
   }
 
   .card[data-section]::before{
@@ -84,6 +94,9 @@
     border-radius:999px;
     font-weight:600; font-size:.92rem;
     background:#101b31; border:1px solid #223353; color:#d6d9ff;
+  }
+  [data-theme="light"] .card[data-section]::before{
+    background:#eef2ff; border-color:#c7d2fe; color:#312e81;
   }
 
   .section-form{
@@ -98,17 +111,14 @@
     background: linear-gradient(180deg, color-mix(in srgb, var(--sec-summary) 12%, transparent), transparent), var(--md-sys-color-surface);
     border-color: color-mix(in srgb, var(--sec-summary) 26%, var(--md-sys-color-outline));
   }
-  .section-form[data-section]::before{ background:color-mix(in srgb, var(--sec-form) 18%, #0b1220); border-color:color-mix(in srgb, var(--sec-form) 40%, #162236); color:#efe9ff; }
-  .section-entries[data-section]::before{ background:color-mix(in srgb, var(--sec-entries) 18%, #0b1220); border-color:color-mix(in srgb, var(--sec-entries) 40%, #162236); color:#d9fffb; }
-  .section-summary[data-section]::before{ background:color-mix(in srgb, var(--sec-summary) 18%, #0b1220); border-color:color-mix(in srgb, var(--sec-summary) 40%, #162236); color:#e6f6ff; }
 
   .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; row-gap:6px; }
   .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 
-  /* GRID */
+  /* Grid */
   .row{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; }
   .row > *{ min-width:0; }
-  .field{ display:block; position:relative; min-width:0; overflow:hidden; }
+  .field{ display:block; position:relative; min-width:0; overflow:visible; }
   .col-3{grid-column: span 3;}
   .col-4{grid-column: span 4;}
   .col-6{grid-column: span 6;}
@@ -129,25 +139,18 @@
     border:1px solid var(--md-sys-color-outline);
     border-radius:12px; background:#0d172b; color:var(--md-sys-color-on-surface);
     outline:none; transition:border .15s, box-shadow .15s, background .15s;
-    font-size:16px;
-    min-height:46px;
-    box-sizing:border-box;
+    font-size:16px; min-height:46px; box-sizing:border-box;
   }
-  input[type="date"].input,
-  input[type="time"].input{
-    appearance:none;
-    -webkit-appearance:none;
-    background-clip: padding-box;
+  [data-theme="light"] .input, [data-theme="light"] select, [data-theme="light"] textarea{
+    background:#ffffff; color:#111827; border-color:#e5e7eb;
+  }
+  input[type="date"].input, input[type="time"].input{
+    appearance:none; -webkit-appearance:none; background-clip: padding-box;
   }
   @supports (-webkit-touch-callout: none){
-    input[type="date"].input,
-    input[type="time"].input{
-      inline-size:100%;
-      max-inline-size:100%;
-      min-inline-size:0 !important;
-      width:100%;
-      max-width:100%;
-      min-width:0 !important;
+    input[type="date"].input, input[type="time"].input{
+      inline-size:100%; max-inline-size:100%; min-inline-size:0 !important;
+      width:100%; max-width:100%; min-width:0 !important;
       font-variant-numeric: tabular-nums;
     }
   }
@@ -155,6 +158,9 @@
     border-color:var(--md-sys-color-primary);
     box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 28%, transparent);
     background:#0f1c35;
+  }
+  [data-theme="light"] .input:focus, [data-theme="light"] select:focus, [data-theme="light"] textarea:focus{
+    background:#ffffff;
   }
   .error{
     border-color:var(--md-sys-color-error) !important;
@@ -170,8 +176,9 @@
     transition:box-shadow .15s, background .15s, border-color .15s, transform .02s; user-select:none;
     will-change:transform;
   }
-  #saveBtn{ min-width:100px; }
+  [data-theme="light"] .btn{ background:#f3f4f6; color:#111827; border-color:#e5e7eb; }
   .btn:hover{ box-shadow: var(--shadow-1); background:#12203a; }
+  [data-theme="light"] .btn:hover{ background:#e5e7eb; }
   .btn:active{ transform: translateY(.5px); }
   .btn .mi{ font-family:"Material Symbols Outlined"; font-size:20px; }
   .btn .btn-label{ white-space:nowrap; }
@@ -180,47 +187,59 @@
     color:#fff; border-color:var(--md-sys-color-primary-variant);
     box-shadow:0 12px 24px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
   }
-  .btn-primary:hover{ box-shadow: var(--shadow-2); }
+  [data-theme="light"] .btn-primary{ color:#fff; }
   .btn-tonal{ background:#121e37; border-color:#1b2a45; color:#c7b9ff; }
+  [data-theme="light"] .btn-tonal{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
   .btn-danger{ border-color:#3b1c23; background:#221117; color:#ffb3b3; }
+  [data-theme="light"] .btn-danger{ background:#fee2e2; border-color:#fecaca; color:#7f1d1d; }
   .btn-ghost{ background:#0f1a2e; }
+  [data-theme="light"] .btn-ghost{ background:#f3f4f6; }
   .btn-chip{ border-radius:999px; padding:8px 12px; border-color:#1b2840; background:#111d34; }
+  [data-theme="light"] .btn-chip{ background:#eef2ff; border-color:#c7d2fe; color:#312e81; }
 
-  /* Status pills */
+  /* Pills / status */
   .pill{ padding:6px 12px; border-radius:999px; font-size:.88rem; background:#101b31; border:1px solid #223353; color:#d6d9ff; }
+  [data-theme="light"] .pill{ background:#eef2ff; border-color:#c7d2fe; color:#1e293b; }
   #status{ min-width:72px; text-align:center; }
   .ok{ background:#0f2a23; border-color:#1d473c; color:#9ff1d0; }
   .warn{ background:#2b230a; border-color:#4b3c12; color:#ffe29a; }
   .bad{ background:#2b0f12; border-color:#502127; color:#ffb3b3; }
 
+  /* Table */
   .table-wrap{ overflow:auto; border-radius:14px; border:1px solid var(--md-sys-color-outline); }
   table{ width:100%; border-collapse:collapse; min-width:980px; background:var(--md-sys-color-surface); }
   th,td{ padding:12px; border-bottom:1px solid var(--md-sys-color-outline); vertical-align: top; }
   th{ position:sticky; top:0; background:#0e1930; text-align:left; font-weight:600; }
-  tr:hover td{ background:color-mix(in srgb, var(--md-sys-color-primary) 10%, #0b1220); }
+  [data-theme="light"] th{ background:#f3f4f6; }
 
+  /* Suggest dropdown */
   .suggest-box{
     position:absolute; top: calc(100% + 6px); left: 0; right: 0;
     max-height: 260px; overflow:auto; background:#0e182c; border:1px solid #1a2741;
     border-radius:12px; box-shadow: var(--shadow-2); z-index: 8;
   }
+  [data-theme="light"] .suggest-box{ background:#ffffff; border-color:#e5e7eb; color:#111827; }
   .suggest-item{ padding:10px 12px; cursor:pointer; color:#e5e7eb; }
+  [data-theme="light"] .suggest-item{ color:#111827; }
   .suggest-item:hover,.suggest-item[aria-selected="true"]{ background:#122340; }
-  .suggest-empty{ padding:10px 12px; color:#98a3b6; }
+  [data-theme="light"] .suggest-item:hover,[data-theme="light"] .suggest-item[aria-selected="true"]{ background:#eef2ff; }
 
   .toast{
     position:fixed; right:16px; bottom:16px; display:none; gap:10px; align-items:center;
     background:#0e182c; border:1px solid #1a2741; border-radius:999px;
     padding:10px 12px; box-shadow: var(--shadow-2); z-index:40; color:#e5e7eb;
   }
+  [data-theme="light"] .toast{ background:#ffffff; border-color:#e5e7eb; color:#111827; }
 
   [hidden]{ display:none !important; }
   .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:60; }
   .modal-backdrop.is-open{ display:flex; align-items:center; justify-content:center; }
   .modal{ width:min(720px, 92vw); max-height:90vh; overflow:auto; background:#0b1220; border:1px solid #162236; border-radius:18px; padding:var(--space-4); box-shadow: var(--shadow-2); }
+  [data-theme="light"] .modal{ background:#ffffff; border-color:#e5e7eb; }
   .modal-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:var(--space-3); }
   .modal-grid{ display:grid; grid-template-columns: repeat(12,1fr); gap:12px; }
   .modal-footer{ display:flex; gap:10px; justify-content:flex-end; margin-top:var(--space-3); }
+
   .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
   /* Mobile tuning */
@@ -233,19 +252,26 @@
     .btn{ min-height:46px; }
     th,td{ padding:10px; }
     .title h1{ font-size:1.1rem; max-width:58vw; }
-    .actions{
-      overflow-x:auto;
-      -webkit-overflow-scrolling:touch;
-      padding-bottom:6px;
-      scrollbar-width: none;
-    }
+    .actions{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; scrollbar-width:none; }
     .actions::-webkit-scrollbar{ display:none; }
     .actions > *{ flex:0 0 auto; }
   }
 
-  /* Reserve space for template chips to avoid shift */
-  #templatesBar{ min-height:48px; }
+  /* CLS: reserve space for dynamic areas */
+  #templatesBar{ min-height:56px; }
+  .stats{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; min-height:40px; }
 </style>
+
+<!-- Early theme to avoid flash/CLS -->
+<script>
+  try{
+    const saved = localStorage.getItem("mmj_theme_v1");
+    if(saved){ document.documentElement.setAttribute('data-theme', saved); }
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches){
+      document.documentElement.setAttribute('data-theme','light');
+    }
+  }catch{}
+</script>
 </head>
 <body>
   <!-- App Bar -->
@@ -265,6 +291,7 @@
           <input type="file" id="importJson" accept="application/json" style="display:none">
         </label>
         <button class="btn btn-danger" id="resetBtn" type="button" title="Deletes all entries in this browser"><span class="mi" aria-hidden="true">delete_forever</span>Erase All</button>
+        <button class="btn btn-ghost" id="themeToggle" type="button" title="Toggle dark/light"><span class="mi" aria-hidden="true">dark_mode</span><span class="btn-label">Theme</span></button>
         <span id="status" class="pill" role="status" aria-live="polite">Ready</span>
         <span id="editingBadge" class="pill" style="display:none;">Editing…</span>
       </div>
@@ -282,86 +309,86 @@
         <span id="reliefPreview" class="pill">Relief: —</span>
       </div>
 
-      <!-- Form wrapper is in HTML to avoid CLS -->
-      <form id="trackerForm" novalidate>
-        <div class="row" id="formGrid">
-          <div class="col-4 field">
-            <label for="date">Date</label>
-            <input class="input" type="date" id="date" required autocomplete="date">
-          </div>
-          <div class="col-4 field">
-            <label for="time">Time</label>
-            <input class="input" type="time" id="time" required autocomplete="time">
-          </div>
-          <div class="col-4 field">
-            <label for="environment">Environment</label>
-            <input class="input" type="text" id="environment" placeholder="Home / After work / Before bed" autocomplete="off">
-          </div>
-
-          <div class="col-4 field">
-            <label for="strain">Strain / Product</label>
-            <input class="input" type="text" id="strain" placeholder="Blue Dream" required autocomplete="off">
-          </div>
-          <div class="col-4 field">
-            <label for="thc_cbd">THC/CBD</label>
-            <input class="input" type="text" id="thc_cbd" placeholder="THC 18% / CBD 1%" required autocomplete="off">
-          </div>
-          <div class="col-4 field">
-            <label for="form">Form</label>
-            <select class="input" id="form" required>
-              <option value="" disabled selected>Select…</option>
-              <option>Flower</option><option>Vape</option><option>Oil</option>
-              <option>Tincture</option><option>Edible</option><option>Topical</option>
-            </select>
-          </div>
-
-          <div class="col-4 field">
-            <label for="method">Method</label>
-            <select class="input" id="method" required>
-              <option value="" disabled selected>Select…</option>
-              <option>Vaporized</option><option>Smoked</option><option>Oral</option>
-              <option>Topical</option><option>Sublingual</option>
-            </select>
-          </div>
-          <div class="col-4 field">
-            <label for="dose">Dose</label>
-            <input class="input" type="text" id="dose" placeholder="0.3 g / 5 mg THC" required autocomplete="off" inputmode="decimal">
-          </div>
-          <div class="col-4 field">
-            <label for="reason">Reason / Symptom</label>
-            <input class="input" type="text" id="reason" placeholder="Pain / Anxiety / Insomnia" required autocomplete="off">
-          </div>
-
-          <div class="col-3 field">
-            <label for="before">Symptom Before (0–10)</label>
-            <input class="input" type="number" id="before" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-          </div>
-          <div class="col-3 field">
-            <label for="after">Symptom After (0–10)</label>
-            <input class="input" type="number" id="after" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-          </div>
-          <div class="col-3 field">
-            <label for="onset">Onset (min)</label>
-            <input class="input" type="number" id="onset" min="0" step="1" placeholder="e.g., 15" inputmode="numeric" pattern="[0-9]*">
-          </div>
-          <div class="col-3 field">
-            <label for="duration">Duration (hours)</label>
-            <input class="input" type="number" id="duration" min="0" step="0.1" placeholder="e.g., 2.5" inputmode="decimal">
-          </div>
-
-          <div class="col-6 field">
-            <label for="side_effects">Side Effects</label>
-            <input class="input" type="text" id="side_effects" placeholder="Dry mouth, Drowsy / Red eyes" autocomplete="off">
-          </div>
-          <div class="col-6 field">
-            <label for="notes">Notes</label>
-            <textarea class="input" id="notes" placeholder="Context, sleep quality, appetite, dreams, etc."></textarea>
-          </div>
+      <!-- keep original structure: grid only; form wrapper added by JS -->
+      <div class="row" id="formGrid">
+        <div class="col-4 field">
+          <label for="date">Date</label>
+          <input class="input" type="date" id="date" required autocomplete="date">
         </div>
-      </form>
+        <div class="col-4 field">
+          <label for="time">Time</label>
+          <input class="input" type="time" id="time" required autocomplete="time">
+        </div>
+        <div class="col-4 field">
+          <label for="environment">Environment</label>
+          <input class="input" type="text" id="environment" placeholder="Home / After work / Before bed" autocomplete="off">
+        </div>
 
+        <div class="col-4 field">
+          <label for="strain">Strain / Product</label>
+          <input class="input" type="text" id="strain" placeholder="Blue Dream" required autocomplete="off">
+        </div>
+        <div class="col-4 field">
+          <label for="thc_cbd">THC/CBD</label>
+          <input class="input" type="text" id="thc_cbd" placeholder="THC 18% / CBD 1%" required autocomplete="off">
+        </div>
+        <div class="col-4 field">
+          <label for="form">Form</label>
+          <select class="input" id="form" required>
+            <option value="" disabled selected>Select…</option>
+            <option>Flower</option><option>Vape</option><option>Oil</option>
+            <option>Tincture</option><option>Edible</option><option>Topical</option>
+          </select>
+        </div>
+
+        <div class="col-4 field">
+          <label for="method">Method</label>
+          <select class="input" id="method" required>
+            <option value="" disabled selected>Select…</option>
+            <option>Vaporized</option><option>Smoked</option><option>Oral</option>
+            <option>Topical</option><option>Sublingual</option>
+          </select>
+        </div>
+        <div class="col-4 field">
+          <label for="dose">Dose</label>
+          <input class="input" type="text" id="dose" placeholder="0.3 g / 5 mg THC" required autocomplete="off" inputmode="decimal">
+        </div>
+        <div class="col-4 field">
+          <label for="reason">Reason / Symptom</label>
+          <input class="input" type="text" id="reason" placeholder="Pain / Anxiety / Insomnia" required autocomplete="off">
+        </div>
+
+        <div class="col-3 field">
+          <label for="before">Symptom Before (0–10)</label>
+          <input class="input" type="number" id="before" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+        </div>
+        <div class="col-3 field">
+          <label for="after">Symptom After (0–10)</label>
+          <input class="input" type="number" id="after" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+        </div>
+        <div class="col-3 field">
+          <label for="onset">Onset (min)</label>
+          <input class="input" type="number" id="onset" min="0" step="1" placeholder="e.g., 15" inputmode="numeric" pattern="[0-9]*">
+        </div>
+        <div class="col-3 field">
+          <label for="duration">Duration (hours)</label>
+          <input class="input" type="number" id="duration" min="0" step="0.1" placeholder="e.g., 2.5" inputmode="decimal">
+        </div>
+
+        <div class="col-6 field">
+          <label for="side_effects">Side Effects</label>
+          <input class="input" type="text" id="side_effects" placeholder="Dry mouth, Drowsy / Red eyes" autocomplete="off">
+        </div>
+        <div class="col-6 field">
+          <label for="notes">Notes</label>
+          <textarea class="input" id="notes" placeholder="Context, sleep quality, appetite, dreams, etc."></textarea>
+        </div>
+      </div>
+
+      <!-- Templates -->
       <div class="controls" id="templatesBar" style="margin-top:12px;">
         <span class="pill">Templates:</span>
+        <!-- pinned templates auto-insert here -->
         <button class="btn btn-tonal btn-chip" id="saveAsTemplateBtn" type="button"><span class="mi" aria-hidden="true">bookmark_add</span>Save Current</button>
         <button class="btn btn-ghost btn-chip" id="manageTemplatesBtn" type="button"><span class="mi" aria-hidden="true">tune</span>Manage</button>
       </div>
@@ -371,27 +398,47 @@
 
     <!-- Entries -->
     <section class="card section-entries" aria-label="Entries" data-section="Entries" style="margin-top:16px;">
-      <div class="controls" style="margin-bottom:10px;">
+      <div class="controls" style="margin-bottom:10px; width:100%;">
         <input id="search" class="input" style="flex:1; min-width:220px;" placeholder="Search strain, reason, notes…" />
-        <input type="date" id="filterFrom" class="input" title="From date" style="width:160px;">
-        <input type="date" id="filterTo" class="input" title="To date" style="width:160px;">
-        <select id="filterMethod" class="input" style="width:170px;">
-          <option value="">Method: All</option>
-          <option>Vaporized</option><option>Smoked</option><option>Oral</option>
-          <option>Topical</option><option>Sublingual</option>
-        </select>
-        <select id="filterForm" class="input" style="width:160px;">
-          <option value="">Form: All</option>
-          <option>Flower</option><option>Vape</option><option>Oil</option>
-          <option>Tincture</option><option>Edible</option><option>Topical</option>
-        </select>
-        <select id="sortBy" class="input" title="Sort" style="width:170px;">
-          <option value="date_desc">Newest</option>
-          <option value="date_asc">Oldest</option>
-          <option value="relief_desc">Relief (high→low)</option>
-          <option value="relief_asc">Relief (low→high)</option>
-        </select>
-        <button id="clearFiltersBtn" class="btn btn-chip"><span class="mi" aria-hidden="true">filter_alt_off</span>Clear</button>
+
+        <div class="field" style="width:160px;">
+          <label for="filterFrom">Start date</label>
+          <input type="date" id="filterFrom" class="input" title="Start date">
+        </div>
+        <div class="field" style="width:160px;">
+          <label for="filterTo">End date</label>
+          <input type="date" id="filterTo" class="input" title="End date">
+        </div>
+
+        <div class="field" style="width:170px;">
+          <label for="filterMethod" class="sr-only">Method</label>
+          <select id="filterMethod" class="input">
+            <option value="">Method: All</option>
+            <option>Vaporized</option><option>Smoked</option><option>Oral</option>
+            <option>Topical</option><option>Sublingual</option>
+          </select>
+        </div>
+
+        <div class="field" style="width:160px;">
+          <label for="filterForm" class="sr-only">Form</label>
+          <select id="filterForm" class="input">
+            <option value="">Form: All</option>
+            <option>Flower</option><option>Vape</option><option>Oil</option>
+            <option>Tincture</option><option>Edible</option><option>Topical</option>
+          </select>
+        </div>
+
+        <div class="field" style="width:170px;">
+          <label for="sortBy" class="sr-only">Sort</label>
+          <select id="sortBy" class="input" title="Sort">
+            <option value="date_desc">Newest</option>
+            <option value="date_asc">Oldest</option>
+            <option value="relief_desc">Relief (high→low)</option>
+            <option value="relief_asc">Relief (low→high)</option>
+          </select>
+        </div>
+
+        <button id="clearFiltersBtn" class="btn btn-chip" type="button"><span class="mi" aria-hidden="true">filter_alt_off</span>Clear</button>
         <span id="countPill" class="pill" title="Visible / Total">0 / 0</span>
       </div>
 
@@ -448,11 +495,13 @@
         </div>
       </div>
 
+      <!-- List view -->
       <div id="tplListView">
         <div class="pill" style="margin-bottom:8px;">Pinned templates appear as chips under the form.</div>
         <div id="tplList"></div>
       </div>
 
+      <!-- Editor view -->
       <div id="tplEditView" hidden>
         <div class="modal-grid">
           <div class="col-12 field">
@@ -474,11 +523,10 @@
       </div>
     </div>
   </div>
-
 <script>
 /* ---------- Keys & Globals ---------- */
 const KEY="mmj_entries_v1", UI_KEY="mmj_ui_state_v1", DRAFT_KEY="mmj_draft_v1";
-const SETTINGS_KEY="mmj_settings_v1", TPL_KEY="mmj_templates_v1";
+const SETTINGS_KEY="mmj_settings_v1", TPL_KEY="mmj_templates_v1", THEME_KEY="mmj_theme_v1";
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const statusPill=$("#status"), editingBadge=$("#editingBadge");
 const undoToast=$("#undoToast"), undoBtn=$("#undoBtn");
@@ -499,15 +547,9 @@ function setStatus(msg, cls="pill"){ statusPill.textContent=msg; statusPill.clas
 function getSettings(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { dupPrevent:true, exportFiltered:false }; }catch{ return { dupPrevent:true, exportFiltered:false }; } }
 function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
 
-/* ---------- CRC32 for export integrity (fixed) ---------- */
+/* ---------- CRC32 ---------- */
 const CRC32_TABLE = (()=>{ let c, table=[]; for (let n=0; n<256; n++){ c=n; for (let k=0;k<8;k++){ c = (c&1)? (0xEDB88320 ^ (c>>>1)) : (c>>>1); } table[n]=c; } return table; })();
-function crc32(str){
-  let crc = 0 ^ (-1);
-  for (let i=0; i<str.length; i++){
-    crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ str.charCodeAt(i)) & 0xFF];
-  }
-  return (crc ^ (-1)) >>> 0;
-}
+function crc32(str){ let crc = 0 ^ (-1); for (let i=0; i<str.length; i++){ crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ str.charCodeAt(i)) & 0xFF]; } return (crc ^ (-1)) >>> 0; }
 
 /* ---------- Dose parsing ---------- */
 function parsePotency(thc_cbd){
@@ -545,7 +587,7 @@ function download(name,content,type="text/plain"){ const blob=new Blob([content]
 function localFileDate(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
 function localDateStr(d=new Date()){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
 
-/* ---------- Suggestions ---------- */
+/* ---------- Suggest ---------- */
 const SPLIT_RE=/[,\/;+&|]/;
 function tokenize(s){ return String(s||"").split(SPLIT_RE).map(t=>t.trim()).filter(t=>t.length>=2); }
 function getRecentTokens(field, n=20){
@@ -602,7 +644,7 @@ function ensureTodayDefaults(){
     const d=new Date();
     $("#time").value=[String(d.getHours()).padStart(2,"0"),String(d.getMinutes()).padStart(2,"0")].join(":");
   }
-}  
+}
 function getFormPartial(){ return {
   date:$("#date").value,time:$("#time").value,environment:$("#environment").value,
   strain:$("#strain").value,thc_cbd:$("#thc_cbd").value,form:$("#form").value,method:$("#method").value,
@@ -781,6 +823,115 @@ function renderTable(){
     `<span class="pill">Avg THC (mg): ${avgTHC}</span>`;
 }
 
+/* ---------- Templates ---------- */
+function defaultTemplates(){
+  return [
+    {id: uid(), name:"Evening Vape for Sleep", pinned:true,
+      fields:{method:"Vaporized", form:"Vape", reason:"Insomnia / Sleep", environment:"Home - Evening", dose:"5 mg THC", notes:"Evening template"},
+      createdAt:Date.now()
+    },
+    {id: uid(), name:"Daytime Microdose for Pain", pinned:false,
+      fields:{method:"Oral", form:"Edible", reason:"Pain", environment:"Daytime", dose:"2.5 mg THC + 5 mg CBD", notes:"Day microdose"},
+      createdAt:Date.now()
+    }
+  ];
+}
+
+/* Seed only on first run (fix delete-last-template bug) */
+function getTemplates(){
+  try{
+    const raw = localStorage.getItem(TPL_KEY);
+    if(raw === null){ const d=defaultTemplates(); localStorage.setItem(TPL_KEY, JSON.stringify(d)); return d; }
+    const t = JSON.parse(raw);
+    return Array.isArray(t) ? t : [];
+  }catch{ return []; }
+}
+function setTemplates(arr){ localStorage.setItem(TPL_KEY, JSON.stringify(arr)); renderPinnedTemplates(); }
+function renderPinnedTemplates(){
+  const bar = $("#templatesBar");
+  [...bar.querySelectorAll("button[data-tpl-id]")].forEach(b=>b.remove());
+  const pinned = getTemplates().filter(t=>t.pinned);
+  const anchor = $("#saveAsTemplateBtn");
+  for(const t of pinned){
+    const b=document.createElement("button");
+    b.className="btn btn-chip btn-tonal";
+    b.type="button";
+    b.dataset.tplId=t.id;
+    b.textContent=t.name;
+    b.title="Apply template";
+    b.addEventListener("click",()=>applyTemplate(t));
+    bar.insertBefore(b, anchor);
+  }
+}
+function applyTemplate(t){
+  if(!t) return;
+  const f=t.fields||{};
+  const set=(id,val)=>{ if(val){ const el=document.getElementById(id); if(el) el.value=val; } };
+  set("method",f.method); set("form",f.form); set("reason",f.reason);
+  set("environment",f.environment); set("dose",f.dose); set("notes",f.notes);
+  setStatus(`Template applied: ${t.name}`,"pill ok");
+}
+
+/* Template Modal (CRUD) */
+function openTplModal(){ const m=$("#tplModal"); renderTplList(); showTplListView(); m.hidden=false; m.classList.add("is-open"); document.body.style.overflow="hidden"; }
+function closeTplModal(){ const m=$("#tplModal"); m.classList.remove("is-open"); m.hidden=true; document.body.style.overflow=""; }
+function showTplListView(){ $("#tplListView").hidden=false; $("#tplEditView").hidden=true; }
+function showTplEditView(){ $("#tplListView").hidden=true; $("#tplEditView").hidden=false; }
+let tplEditingId=null;
+function renderTplList(){
+  const box=$("#tplList");
+  const list=getTemplates().slice().sort((a,b)=> (b.pinned - a.pinned) || a.name.localeCompare(b.name));
+  box.innerHTML="";
+  if(!list.length){ box.innerHTML='<div class="pill">No templates yet. Click “New Template”.</div>'; return; }
+  for(const t of list){
+    const row=document.createElement("div");
+    row.className="card"; row.style.marginBottom="10px";
+    const preview=Object.entries(t.fields).filter(([k,v])=>v).map(([k,v])=>`${k}: ${escapeHtml(v)}`).slice(0,4).join(" · ");
+    row.innerHTML=`
+      <div class="controls" style="justify-content:space-between;">
+        <div style="min-width:0;">
+          <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            ${escapeHtml(t.name)}${t.pinned? ' <span class="pill" style="margin-left:6px;">Pinned</span>': ''}
+          </div>
+          <div style="opacity:.85; font-size:.92rem; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            ${preview || '<span class="pill">No preset fields</span>'}
+          </div>
+        </div>
+        <div class="controls">
+          <button class="btn btn-chip" data-act="apply" data-id="${t.id}"><span class="mi" aria-hidden="true">play_arrow</span>Apply</button>
+          <button class="btn btn-chip" data-act="edit" data-id="${t.id}"><span class="mi" aria-hidden="true">edit</span>Edit</button>
+          <button class="btn btn-chip" data-act="pin" data-id="${t.id}">${t.pinned?'<span class="mi" aria-hidden="true">star</span>Unpin':'<span class="mi" aria-hidden="true">star</span>Pin'}</button>
+          <button class="btn btn-chip btn-danger" data-act="del" data-id="${t.id}"><span class="mi" aria-hidden="true">delete</span>Delete</button>
+        </div>
+      </div>`;
+    box.appendChild(row);
+  }
+}
+function loadTemplateEditor(t){ tplEditingId=t?.id||null;
+  $("#tplName").value = t?.name || "";
+  $("#tplPinned").checked = !!t?.pinned;
+  $("#tplMethod").value = t?.fields?.method || "";
+  $("#tplForm").value = t?.fields?.form || "";
+  $("#tplReason").value = t?.fields?.reason || "";
+  $("#tplEnvironment").value = t?.fields?.environment || "";
+  $("#tplDose").value = t?.fields?.dose || "";
+  $("#tplNotes").value = t?.fields?.notes || "";
+}
+function readTemplateEditor(){
+  return {
+    name: $("#tplName").value.trim(),
+    pinned: $("#tplPinned").checked,
+    fields: {
+      method: $("#tplMethod").value.trim(),
+      form: $("#tplForm").value.trim(),
+      reason: $("#tplReason").value.trim(),
+      environment: $("#tplEnvironment").value.trim(),
+      dose: $("#tplDose").value.trim(),
+      notes: $("#tplNotes").value.trim()
+    }
+  };
+}
+
 /* ---------- Doctor Summary ---------- */
 function filterByRange(entries, range){ if(range==="all") return entries; const days=Number(range)||30; const now=new Date(), cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-days); return entries.filter(e=>{ if(!e.date) return false; const [y,m,d]=e.date.split("-").map(Number); const dt=new Date(y,(m||1)-1,d||1); return dt>=cutoff; }); }
 function avg(a){ return a.length? a.reduce((x,y)=>x+y,0)/a.length : null; }
@@ -817,6 +968,27 @@ function generateDoctorSummary(range="30"){
 
 /* ---------- Init & Events ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
+  // Wrap grid into <form> to keep original structure intent
+  const formWrap=document.createElement("form");
+  formWrap.id="trackerForm";
+  formWrap.noValidate = true;
+  formWrap.addEventListener("submit",(e)=>e.preventDefault());
+  const formSection=document.getElementById("formGrid");
+  formSection.parentNode.insertBefore(formWrap, formSection);
+  formWrap.appendChild(formSection);
+
+  // Theme toggle
+  const themeBtn = $("#themeToggle");
+  themeBtn.addEventListener("click", ()=>{
+    const cur = document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", cur);
+    try{ localStorage.setItem(THEME_KEY, cur);}catch{}
+    themeBtn.querySelector(".mi").textContent = (cur==="light" ? "light_mode" : "dark_mode");
+  });
+  themeBtn.querySelector(".mi").textContent =
+    (document.documentElement.getAttribute("data-theme")==="light" ? "light_mode" : "dark_mode");
+
+  // Suggest
   attachSuggest("strain", ()=>getRecentTokens("strain"));
   attachSuggest("thc_cbd", ()=>getRecentTokens("thc_cbd"));
   attachSuggest("dose", ()=>getRecentTokens("dose"));
@@ -956,11 +1128,13 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(act==="edit"){ tplEditingId=id; loadTemplateEditor(arr[idx]); showTplEditView(); }
     if(act==="pin"){ arr[idx].pinned = !arr[idx].pinned; setTemplates(arr); renderTplList(); renderPinnedTemplates(); }
     if(act==="del"){
-      if(confirm("Delete this template?")){ arr.splice(idx,1); setTemplates(arr); renderTplList(); renderPinnedTemplates(); setStatus("Template deleted","pill bad"); }
+      if(confirm("Delete this template?")){
+        arr.splice(idx,1); setTemplates(arr); renderTplList(); renderPinnedTemplates(); setStatus("Template deleted","pill bad");
+      }
     }
   });
 
-  // Close modal on backdrop click / Esc
+  // Modal UX
   closeTplModal();
   $("#tplModal").addEventListener("click", (e)=>{ if (e.target.id === "tplModal") closeTplModal(); });
   document.addEventListener("keydown", (e)=>{ if (e.key === "Escape" && !$("#tplModal").hidden) closeTplModal(); });
@@ -988,112 +1162,6 @@ undoBtn.addEventListener("click", ()=>{ if(lastDeleted){ const entries=getEntrie
 
 /* ---------- Error clearing ---------- */
 function attachErrorClearing(){ requiredFields.forEach(sel=>{ const el=$(sel); const evt=(el.tagName==="SELECT")?"change":"input"; el.addEventListener(evt, ()=>el.classList.remove("error")); }); }
-
-/* ---------- Templates ---------- */
-function defaultTemplates(){
-  return [
-    {id: uid(), name:"Evening Vape for Sleep", pinned:true,
-      fields:{method:"Vaporized", form:"Vape", reason:"Insomnia / Sleep", environment:"Home - Evening", dose:"5 mg THC", notes:"Evening template"},
-      createdAt:Date.now()
-    },
-    {id: uid(), name:"Daytime Microdose for Pain", pinned:false,
-      fields:{method:"Oral", form:"Edible", reason:"Pain", environment:"Daytime", dose:"2.5 mg THC + 5 mg CBD", notes:"Day microdose"},
-      createdAt:Date.now()
-    }
-  ];
-}
-function getTemplates(){
-  try{
-    const t = JSON.parse(localStorage.getItem(TPL_KEY) || "null");
-    if(Array.isArray(t) && t.length) return t;
-    const d = defaultTemplates(); localStorage.setItem(TPL_KEY, JSON.stringify(d)); return d;
-  }catch{ const d=defaultTemplates(); localStorage.setItem(TPL_KEY, JSON.stringify(d)); return d; }
-}
-function setTemplates(arr){ localStorage.setItem(TPL_KEY, JSON.stringify(arr)); renderPinnedTemplates(); }
-function renderPinnedTemplates(){
-  const bar = $("#templatesBar");
-  [...bar.querySelectorAll("button[data-tpl-id]")].forEach(b=>b.remove());
-  const pinned = getTemplates().filter(t=>t.pinned);
-  const anchor = $("#saveAsTemplateBtn");
-  for(const t of pinned){
-    const b=document.createElement("button");
-    b.className="btn btn-chip btn-tonal";
-    b.type="button";
-    b.dataset.tplId=t.id;
-    b.textContent=t.name;
-    b.title="Apply template";
-    b.addEventListener("click",()=>applyTemplate(t));
-    bar.insertBefore(b, anchor);
-  }
-}
-function applyTemplate(t){
-  if(!t) return;
-  const f=t.fields||{};
-  const set=(id,val)=>{ if(val){ const el=document.getElementById(id); if(el) el.value=val; } };
-  set("method",f.method); set("form",f.form); set("reason",f.reason);
-  set("environment",f.environment); set("dose",f.dose); set("notes",f.notes);
-  setStatus(`Template applied: ${t.name}`,"pill ok");
-}
-
-/* ---------- Template Modal ---------- */
-function openTplModal(){ const m=$("#tplModal"); renderTplList(); showTplListView(); m.hidden=false; m.classList.add("is-open"); document.body.style.overflow="hidden"; }
-function closeTplModal(){ const m=$("#tplModal"); m.classList.remove("is-open"); m.hidden=true; document.body.style.overflow=""; }
-function showTplListView(){ $("#tplListView").hidden=false; $("#tplEditView").hidden=true; }
-function showTplEditView(){ $("#tplListView").hidden=true; $("#tplEditView").hidden=false; }
-let tplEditingId=null;
-function renderTplList(){
-  const box=$("#tplList");
-  const list=getTemplates().slice().sort((a,b)=> (b.pinned - a.pinned) || a.name.localeCompare(b.name));
-  box.innerHTML="";
-  if(!list.length){ box.innerHTML='<div class="pill">No templates yet. Click “New Template”.</div>'; return; }
-  for(const t of list){
-    const row=document.createElement("div");
-    row.className="card"; row.style.marginBottom="10px";
-    const preview=Object.entries(t.fields).filter(([k,v])=>v).map(([k,v])=>`${k}: ${escapeHtml(v)}`).slice(0,4).join(" · ");
-    row.innerHTML=`
-      <div class="controls" style="justify-content:space-between;">
-        <div style="min-width:0;">
-          <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-            ${escapeHtml(t.name)}${t.pinned? ' <span class="pill" style="margin-left:6px;">Pinned</span>': ''}
-          </div>
-          <div style="opacity:.85; font-size:.92rem; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-            ${preview || '<span class="pill">No preset fields</span>'}
-          </div>
-        </div>
-        <div class="controls">
-          <button class="btn btn-chip" data-act="apply" data-id="${t.id}"><span class="mi" aria-hidden="true">play_arrow</span>Apply</button>
-          <button class="btn btn-chip" data-act="edit" data-id="${t.id}"><span class="mi" aria-hidden="true">edit</span>Edit</button>
-          <button class="btn btn-chip" data-act="pin" data-id="${t.id}">${t.pinned?'<span class="mi" aria-hidden="true">star</span>Unpin':'<span class="mi" aria-hidden="true">star</span>Pin'}</button>
-          <button class="btn btn-chip btn-danger" data-act="del" data-id="${t.id}"><span class="mi" aria-hidden="true">delete</span>Delete</button>
-        </div>
-      </div>`;
-    box.appendChild(row);
-  }
-}
-function loadTemplateEditor(t){ tplEditingId=t?.id||null;
-  $("#tplName").value = t?.name || "";
-  $("#tplPinned").checked = !!t?.pinned;
-  $("#tplMethod").value = t?.fields?.method || "";
-  $("#tplForm").value = t?.fields?.form || "";
-  $("#tplReason").value = t?.fields?.reason || "";
-  $("#tplEnvironment").value = t?.fields?.environment || "";
-  $("#tplDose").value = t?.fields?.dose || "";
-  $("#tplNotes").value = t?.fields?.notes || "";
-}
-function readTemplateEditor(){
-  return {
-    name: $("#tplName").value.trim(),
-    pinned: $("#tplPinned").checked,
-    fields: {
-      method: $("#tplMethod").value.trim(),
-      form: $("#tplForm").value.trim(),
-      reason: $("#tplReason").value.trim(),
-      environment: $("#tplEnvironment").value.trim(),
-      dose: $("#tplDose").value.trim(),
-      notes: $("#tplNotes").value.trim()
-    }
-  };
-}
 </script>
 </body>
 </html>
