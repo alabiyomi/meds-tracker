@@ -17,7 +17,6 @@
 
 <style>
   :root{
-    /* Dark (default) */
     --md-sys-color-primary:#8b5cf6;
     --md-sys-color-primary-variant:#7c3aed;
     --md-sys-color-secondary:#94a3b8;
@@ -37,6 +36,8 @@
     --sec-entries:#14b8a6;
     --sec-summary:#38bdf8;
 
+    --appbar-min-h:64px;       /* reserve app bar height to reduce CLS */
+    --toolbar-min-h:52px;      /* reserve action row height */
     color-scheme: dark;
   }
   /* Light theme */
@@ -57,9 +58,10 @@
     color:var(--md-sys-color-on-surface);
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
   }
 
-  /* App bar */
+  /* App bar (reserve height to avoid jump when wrapping) */
   .appbar{
     position:sticky; top:0; z-index:20;
     background: linear-gradient(180deg, rgba(139,92,246,.10), rgba(139,92,246,0)), var(--md-sys-color-surface);
@@ -70,6 +72,7 @@
   .appbar .inner{
     max-width:1200px; margin-inline:auto; padding: var(--space-3);
     display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap;
+    min-height:var(--appbar-min-h);
   }
   .title{ display:flex; align-items:center; gap:12px; min-width:0; }
   .title .icon{ font-family:"Material Symbols Outlined"; font-size:28px; color:var(--md-sys-color-primary); }
@@ -112,7 +115,7 @@
     border-color: color-mix(in srgb, var(--sec-summary) 26%, var(--md-sys-color-outline));
   }
 
-  .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; row-gap:6px; }
+  .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; row-gap:6px; min-height:var(--toolbar-min-h); }
   .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 
   /* Grid */
@@ -133,7 +136,6 @@
     max-inline-size:100%;
     min-inline-size:0;
     width:100%;
-    max-width:100%;
     min-width:0;
     padding:12px 12px;
     border:1px solid var(--md-sys-color-outline);
@@ -180,19 +182,16 @@
   .btn:hover{ box-shadow: var(--shadow-1); background:#12203a; }
   [data-theme="light"] .btn:hover{ background:#e5e7eb; }
   .btn:active{ transform: translateY(.5px); }
-  .btn .mi{ font-family:"Material Symbols Outlined"; font-size:20px; }
+  .btn .mi{ font-family:"Material Symbols Outlined"; font-size:20px; color:inherit; }
   .btn .btn-label{ white-space:nowrap; }
   .btn-primary{
     background:linear-gradient(180deg, color-mix(in srgb, var(--md-sys-color-primary) 85%, #0b0b0b), var(--md-sys-color-primary));
     color:#fff; border-color:var(--md-sys-color-primary-variant);
     box-shadow:0 12px 24px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
   }
-  [data-theme="light"] .btn-primary{ color:#fff; }
+  /* Light theme: make primary button text black */
   [data-theme="light"] .btn-primary{ color:#111827; }
   .btn-primary .mi{ color:inherit; }   
-
-  
-  
   .btn-tonal{ background:#121e37; border-color:#1b2a45; color:#c7b9ff; }
   [data-theme="light"] .btn-tonal{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
   .btn-danger{ border-color:#3b1c23; background:#221117; color:#ffb3b3; }
@@ -265,6 +264,7 @@
   /* CLS: reserve space for dynamic areas */
   #templatesBar{ min-height:56px; }
   .stats{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; min-height:40px; }
+  #summaryText{ min-height:160px; } /* reserve space for generated summary */
 </style>
 
 <!-- Early theme to avoid flash/CLS -->
@@ -304,7 +304,7 @@
   </div>
 
   <main class="wrap">
-    <!-- Form -->
+    <!-- Form (now a real <form> to avoid reparenting CLS) -->
     <section class="card section-form" aria-label="Log a new session" data-section="Log Session">
       <div class="controls" style="justify-content:space-between; margin-bottom:6px;">
         <div class="controls" style="gap:8px;">
@@ -314,81 +314,84 @@
         <span id="reliefPreview" class="pill">Relief: —</span>
       </div>
 
-      <!-- keep original structure: grid only; form wrapper added by JS -->
-      <div class="row" id="formGrid">
-        <div class="col-4 field">
-          <label for="date">Date</label>
-          <input class="input" type="date" id="date" required autocomplete="date">
-        </div>
-        <div class="col-4 field">
-          <label for="time">Time</label>
-          <input class="input" type="time" id="time" required autocomplete="time">
-        </div>
-        <div class="col-4 field">
-          <label for="environment">Environment</label>
-          <input class="input" type="text" id="environment" placeholder="Home / After work / Before bed" autocomplete="off">
-        </div>
+      <form id="trackerForm" novalidate>
+        <div class="row" id="formGrid">
+          <div class="col-4 field">
+            <label for="date">Date</label>
+            <input class="input" type="date" id="date" required autocomplete="date">
+          </div>
+          <div class="col-4 field">
+            <label for="time">Time</label>
+            <input class="input" type="time" id="time" required autocomplete="time">
+          </div>
+          <div class="col-4 field">
+            <label for="environment">Environment</label>
+            <input class="input" type="text" id="environment" placeholder="Home / After work / Before bed" autocomplete="off">
+          </div>
 
-        <div class="col-4 field">
-          <label for="strain">Strain / Product</label>
-          <input class="input" type="text" id="strain" placeholder="Blue Dream" required autocomplete="off">
-        </div>
-        <div class="col-4 field">
-          <label for="thc_cbd">THC/CBD</label>
-          <input class="input" type="text" id="thc_cbd" placeholder="THC 18% / CBD 1%" required autocomplete="off">
-        </div>
-        <div class="col-4 field">
-          <label for="form">Form</label>
-          <select class="input" id="form" required>
-            <option value="" disabled selected>Select…</option>
-            <option>Flower</option><option>Vape</option><option>Oil</option>
-            <option>Tincture</option><option>Edible</option><option>Topical</option>
-          </select>
-        </div>
+          <div class="col-4 field">
+            <label for="strain">Strain / Product</label>
+            <input class="input" type="text" id="strain" placeholder="Blue Dream" required autocomplete="off">
+          </div>
+          <div class="col-4 field">
+            <label for="thc_cbd">THC/CBD</label>
+            <input class="input" type="text" id="thc_cbd" placeholder="THC 18% / CBD 1%" required autocomplete="off">
+          </div>
+          <div class="col-4 field">
+            <label for="form">Form</label>
+            <select class="input" id="form" required>
+              <option value="" disabled selected>Select…</option>
+              <option>Flower</option><option>Vape</option><option>Oil</option>
+              <option>Tincture</option><option>Edible</option><option>Topical</option>
+            </select>
+          </div>
 
-        <div class="col-4 field">
-          <label for="method">Method</label>
-          <select class="input" id="method" required>
-            <option value="" disabled selected>Select…</option>
-            <option>Vaporized</option><option>Smoked</option><option>Oral</option>
-            <option>Topical</option><option>Sublingual</option>
-          </select>
-        </div>
-        <div class="col-4 field">
-          <label for="dose">Dose</label>
-          <input class="input" type="text" id="dose" placeholder="0.3 g / 5 mg THC" required autocomplete="off" inputmode="decimal">
-        </div>
-        <div class="col-4 field">
-          <label for="reason">Reason / Symptom</label>
-          <input class="input" type="text" id="reason" placeholder="Pain / Anxiety / Insomnia" required autocomplete="off">
-        </div>
+          <div class="col-4 field">
+            <label for="method">Method</label>
+            <select class="input" id="method" required>
+              <option value="" disabled selected>Select…</option>
+              <option>Vaporized</option><option>Smoked</option><option>Oral</option>
+              <option>Topical</option><option>Sublingual</option>
+            </select>
+          </div>
+          <div class="col-4 field">
+            <label for="dose">Dose</label>
+            <input class="input" type="text" id="dose" placeholder="0.3 g / 5 mg THC" required autocomplete="off" inputmode="decimal">
+          </div>
+          <div class="col-4 field">
+            <label for="reason">Reason / Symptom</label>
+            <input class="input" type="text" id="reason" placeholder="Pain / Anxiety / Insomnia" required autocomplete="off">
+          </div>
 
-        <div class="col-3 field">
-          <label for="before">Symptom Before (0–10)</label>
-          <input class="input" type="number" id="before" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-        </div>
-        <div class="col-3 field">
-          <label for="after">Symptom After (0–10)</label>
-          <input class="input" type="number" id="after" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-        </div>
-        <div class="col-3 field">
-          <label for="onset">Onset (min)</label>
-          <input class="input" type="number" id="onset" min="0" step="1" placeholder="e.g., 15" inputmode="numeric" pattern="[0-9]*">
-        </div>
-        <div class="col-3 field">
-          <label for="duration">Duration (hours)</label>
-          <input class="input" type="number" id="duration" min="0" step="0.1" placeholder="e.g., 2.5" inputmode="decimal">
-        </div>
+          <div class="col-3 field">
+            <label for="before">Symptom Before (0–10)</label>
+            <input class="input" type="number" id="before" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+          </div>
+          <div class="col-3 field">
+            <label for="after">Symptom After (0–10)</label>
+            <input class="input" type="number" id="after" min="0" max="10" step="1" required inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+          </div>
+          <div class="col-3 field">
+            <label for="onset">Onset (min)</label>
+            <input class="input" type="number" id="onset" min="0" step="1" placeholder="e.g., 15" inputmode="numeric" pattern="[0-9]*">
+          </div>
+          <div class="col-3 field">
+            <label for="duration">Duration (hours)</label>
+            <input class="input" type="number" id="duration" min="0" step="0.1" placeholder="e.g., 2.5" inputmode="decimal">
+          </div>
 
-        <div class="col-6 field">
-          <label for="side_effects">Side Effects</label>
-          <input class="input" type="text" id="side_effects" placeholder="Dry mouth, Drowsy / Red eyes" autocomplete="off">
+          <div class="col-6 field">
+            <label for="side_effects">Side Effects</label>
+            <input class="input" type="text" id="side_effects" placeholder="Dry mouth, Drowsy / Red eyes" autocomplete="off">
+          </div>
+          <div class="col-6 field">
+            <label for="notes">Notes</label>
+            <textarea class="input" id="notes" placeholder="Context, sleep quality, appetite, dreams, etc."></textarea>
+          </div>
         </div>
-        <div class="col-6 field">
-          <label for="notes">Notes</label>
-          <textarea class="input" id="notes" placeholder="Context, sleep quality, appetite, dreams, etc."></textarea>
-        </div>
-      </div>
+        <!-- disable default submit; buttons above handle actions -->
+        <button type="submit" hidden aria-hidden="true"></button>
+      </form>
 
       <!-- Templates -->
       <div class="controls" id="templatesBar" style="margin-top:12px;">
@@ -528,7 +531,7 @@
       </div>
     </div>
   </div>
-<script>
+  <script>
 /* ---------- Keys & Globals ---------- */
 const KEY="mmj_entries_v1", UI_KEY="mmj_ui_state_v1", DRAFT_KEY="mmj_draft_v1";
 const SETTINGS_KEY="mmj_settings_v1", TPL_KEY="mmj_templates_v1", THEME_KEY="mmj_theme_v1";
@@ -761,7 +764,7 @@ function loadUIState(){
   }catch{}
 }
 
-/* ---------- Filtering ---------- */
+/* ---------- Filtering & Table ---------- */
 function getFilteredEntries(){
   const q=$("#search").value.toLowerCase(), fM=$("#filterMethod").value, fF=$("#filterForm").value, fFrom=$("#filterFrom").value, fTo=$("#filterTo").value;
   return getEntries().filter(e=>{
@@ -775,7 +778,6 @@ function getFilteredEntries(){
   });
 }
 
-/* ---------- Table ---------- */
 function toCSV(arr){ const entries=arr||getEntries(); const cols=["date","time","strain","thc_cbd","form","method","dose","reason","before","after","relief","onset","duration","side_effects","environment","notes"]; const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`; const lines=[cols.join(",")]; for(const e of entries){ lines.push(cols.map(k=>esc(e[k])).join(",")); } return lines.join("\n"); }
 
 function renderTable(){
@@ -828,7 +830,7 @@ function renderTable(){
     `<span class="pill">Avg THC (mg): ${avgTHC}</span>`;
 }
 
-/* ---------- Templates ---------- */
+/* ---------- Templates (seed once, fix delete-last bug) ---------- */
 function defaultTemplates(){
   return [
     {id: uid(), name:"Evening Vape for Sleep", pinned:true,
@@ -841,8 +843,6 @@ function defaultTemplates(){
     }
   ];
 }
-
-/* Seed only on first run (fix delete-last-template bug) */
 function getTemplates(){
   try{
     const raw = localStorage.getItem(TPL_KEY);
@@ -877,7 +877,6 @@ function applyTemplate(t){
   setStatus(`Template applied: ${t.name}`,"pill ok");
 }
 
-/* Template Modal (CRUD) */
 function openTplModal(){ const m=$("#tplModal"); renderTplList(); showTplListView(); m.hidden=false; m.classList.add("is-open"); document.body.style.overflow="hidden"; }
 function closeTplModal(){ const m=$("#tplModal"); m.classList.remove("is-open"); m.hidden=true; document.body.style.overflow=""; }
 function showTplListView(){ $("#tplListView").hidden=false; $("#tplEditView").hidden=true; }
@@ -973,14 +972,8 @@ function generateDoctorSummary(range="30"){
 
 /* ---------- Init & Events ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
-  // Wrap grid into <form> to keep original structure intent
-  const formWrap=document.createElement("form");
-  formWrap.id="trackerForm";
-  formWrap.noValidate = true;
-  formWrap.addEventListener("submit",(e)=>e.preventDefault());
-  const formSection=document.getElementById("formGrid");
-  formSection.parentNode.insertBefore(formWrap, formSection);
-  formWrap.appendChild(formSection);
+  const formEl = $("#trackerForm");
+  formEl.addEventListener("submit",(e)=>e.preventDefault()); // keep buttons in control
 
   // Theme toggle
   const themeBtn = $("#themeToggle");
@@ -993,7 +986,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   themeBtn.querySelector(".mi").textContent =
     (document.documentElement.getAttribute("data-theme")==="light" ? "light_mode" : "dark_mode");
 
-  // Suggest
+  // Suggestions
   attachSuggest("strain", ()=>getRecentTokens("strain"));
   attachSuggest("thc_cbd", ()=>getRecentTokens("thc_cbd"));
   attachSuggest("dose", ()=>getRecentTokens("dose"));
@@ -1003,7 +996,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   ensureTodayDefaults();
   attachErrorClearing();
-  $("#trackerForm").addEventListener("input", ()=>{ saveDraft(); updateReliefPreview(); });
+  formEl.addEventListener("input", ()=>{ saveDraft(); updateReliefPreview(); });
   $("#before").addEventListener("input", updateReliefPreview);
   $("#after").addEventListener("input", updateReliefPreview);
 
@@ -1170,3 +1163,4 @@ function attachErrorClearing(){ requiredFields.forEach(sel=>{ const el=$(sel); c
 </script>
 </body>
 </html>
+
