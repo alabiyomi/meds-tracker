@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Medication Tracker</title>
 
-<!-- Make relative paths (icons/manifest/SW) predictable locally & on GitHub Pages -->
+<!-- Keep paths consistent locally and on GitHub Pages -->
 <base href="./">
 
-<!-- Theme colors for PWA / browser UI -->
+<!-- Browser/PWA colors -->
 <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<!-- Icons (adjust filenames if your repo uses .png.png) -->
-<link rel="icon" href="./icons/icon-256.png.png">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png.png">
+<!-- Icons (ensure these files exist in /icons) -->
+<link rel="icon" href="./icons/icon-256.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png">
 
-<!-- Inject manifest only on http(s) so file:// doesn’t throw CORS -->
+<!-- Load manifest only on http(s) to avoid file:// CORS errors -->
 <script>
   (function () {
     if (location.protocol === 'http:' || location.protocol === 'https:') {
-      var link = document.createElement('link');
+      const link = document.createElement('link');
       link.rel = 'manifest';
       link.href = './manifest.webmanifest';
       document.head.appendChild(link);
@@ -59,13 +59,13 @@
     --sec-summary:#38bdf8;
 
     /* CLS guards */
-    --appbar-min-h:64px;  /* reserved height for toolbar */
+    --appbar-min-h:64px;
     --toolbar-min-h:52px;
 
     color-scheme: dark;
   }
 
-  /* Light theme override */
+  /* Light theme */
   [data-theme="light"]{
     --md-sys-color-surface:#ffffff;
     --md-sys-color-surface-variant:#f6f7fb;
@@ -76,6 +76,7 @@
 
   *{box-sizing:border-box}
   html,body{height:100%}
+  html,body{overscroll-behavior: none; overscroll-behavior-y: none;}
   body{
     margin:0;
     background:var(--md-sys-color-surface-variant);
@@ -86,10 +87,9 @@
     text-rendering:optimizeLegibility;
   }
 
-  /* FIXED + AUTO-HIDE APP BAR */
+  /* FIXED APP BAR with auto-hide (transform only) */
   .appbar{
-    position:fixed; top:0; left:0; right:0;
-    z-index:1000;
+    position:fixed; top:0; left:0; right:0; z-index:1000;
     background:
       linear-gradient(180deg, rgba(139,92,246,.10), rgba(139,92,246,0)),
       var(--md-sys-color-surface);
@@ -101,24 +101,17 @@
     transition: transform .25s ease;
     will-change: transform;
   }
-  .appbar.appbar--hidden{
-    transform: translateY(calc(-100% - env(safe-area-inset-top)));
-  }
+  .appbar.appbar--hidden{ transform: translateY(calc(-100% - env(safe-area-inset-top))); }
   .appbar .inner{
     max-width:1200px; margin-inline:auto; padding: var(--space-3);
     display:flex; align-items:center; gap:12px; justify-content:space-between;
-    flex-wrap:wrap;
-    min-height:var(--appbar-min-h); /* reserve height for CLS */
+    flex-wrap:wrap; min-height:var(--appbar-min-h);
   }
-  /* Spacer to keep layout stable below the fixed appbar */
-  #appbar-spacer{
-    height: var(--appbar-min-h);
-    transition: height .25s ease;
-  }
-  #appbar-spacer.is-hidden{ height:0 !important; }
+  /* Constant spacer to prevent layout shift */
+  #appbar-spacer{ height: var(--appbar-min-h); }
 
   .title{ display:flex; align-items:center; gap:12px; min-width:0; }
-  .title h1{ font-size:clamp(1.05rem, 1.4vw + .7rem, 1.35rem); margin:0; font-weight:700; letter-spacing:.1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:62vw; }
+  .title h1{ font-size:clamp(1.05rem, 1.4vw + .7rem, 1.35rem); margin:0; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:62vw; }
   .title .logo-img{ width:28px; height:28px; border-radius:8px; object-fit:contain; display:block; }
 
   .wrap{ max-width:1200px; margin-inline:auto; padding: var(--space-4) var(--space-3); }
@@ -134,11 +127,8 @@
 
   .card[data-section]::before{
     content: attr(data-section);
-    display:inline-block;
-    margin-bottom: var(--space-3);
-    padding:6px 12px;
-    border-radius:999px;
-    font-weight:600; font-size:.92rem;
+    display:inline-block; margin-bottom: var(--space-3); padding:6px 12px;
+    border-radius:999px; font-weight:600; font-size:.92rem;
     background:#101b31; border:1px solid #223353; color:#d6d9ff;
   }
   [data-theme="light"] .card[data-section]::before{ background:#eef2ff; border-color:#c7d2fe; color:#312e81; }
@@ -267,7 +257,7 @@
 
   .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
-  /* Mobile niceties */
+  /* Mobile */
   @media (max-width: 1100px){
     .col-6,.col-4,.col-3,.col-8{grid-column:span 12;}
     .row{ grid-template-columns: repeat(6,1fr); }
@@ -290,7 +280,7 @@
   #summaryText{ min-height:160px; }
 </style>
 
-<!-- Early theme to avoid flash/CLS -->
+<!-- Early theme to avoid flash -->
 <script>
   try{
     const saved = localStorage.getItem("mmj_theme_v1");
@@ -306,8 +296,7 @@
   <div class="appbar" id="appbar">
     <div class="inner">
       <div class="title">
-        <!-- If your icon is named icon-256.png.png, change src below to match -->
-        <img class="logo-img" src="./icons/icon-256.png.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
+        <img class="logo-img" src="./icons/icon-256.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
         <h1>Medication Tracker</h1>
       </div>
       <div class="actions">
@@ -326,7 +315,7 @@
       </div>
     </div>
   </div>
-  <!-- reserved space so content doesn't jump under the fixed bar -->
+  <!-- Reserve space to avoid content jump under fixed header -->
   <div id="appbar-spacer" aria-hidden="true"></div>
 
   <main class="wrap">
@@ -556,7 +545,6 @@
     </div>
   </div>
 
-<!-- JS -->
 <script>
 /* ---------- Keys & Globals ---------- */
 const KEY="mmj_entries_v1", UI_KEY="mmj_ui_state_v1", DRAFT_KEY="mmj_draft_v1";
@@ -585,7 +573,7 @@ function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 const CRC32_TABLE = (()=>{ let c, table=[]; for (let n=0; n<256; n++){ c=n; for (let k=0;k<8;k++){ c = (c&1)? (0xEDB88320 ^ (c>>>1)) : (c>>>1); } table[n]=c; } return table; })();
 function crc32(str){ let crc = 0 ^ (-1); for (let i=0; i<str.length; i++){ crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ str.charCodeAt(i)) & 0xFF]; } return (crc ^ (-1)) >>> 0; }
 
-/* ---------- CSV Export helper ---------- */
+/* ---------- CSV helper ---------- */
 function toCSV(arr){
   const entries=arr||getEntries();
   const cols=["date","time","strain","thc_cbd","form","method","dose","reason","before","after","relief","onset","duration","side_effects","environment","notes"];
@@ -626,7 +614,7 @@ function computeDoseMg(entry){
   return { mgTHC: (mgTHC!=null? +mgTHC.toFixed(1): null), mgCBD: (mgCBD!=null? +mgCBD.toFixed(1): null) };
 }
 
-/* ---------- Misc Utils ---------- */
+/* ---------- Utilities ---------- */
 function download(name,content,type="text/plain"){ const blob=new Blob([content],{type}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),0); }
 function localFileDate(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
 function localDateStr(d=new Date()){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
@@ -750,7 +738,10 @@ function validateForm(){
   requiredFields.forEach(sel=>$(sel).classList.remove("error"));
   let firstBad=null;
   const need=["#date","#time","#strain","#thc_cbd","#dose","#reason"];
-  for(const sel of need){ if(!$(sel).value.trim()){ $(el=sel).classList.add("error"); if(!firstBad) firstBad=$(sel); } }
+  for(const sel of need){
+    const el=$(sel);
+    if(!el.value.trim()){ el.classList.add("error"); if(!firstBad) firstBad=el; }
+  }
   if(!$("#form").value){ $("#form").classList.add("error"); if(!firstBad) firstBad=$("#form"); }
   if(!$("#method").value){ $("#method").classList.add("error"); if(!firstBad) firstBad=$("#method"); }
   const b=parseInt($("#before").value,10), a=parseInt($("#after").value,10);
@@ -1006,65 +997,47 @@ function generateDoctorSummary(range="30"){
   return lines.join("\n");
 }
 
-/* ---------- APP BAR: spacer sync + auto-hide ---------- */
+/* ---------- APP BAR: spacer sync + auto-hide (transform only, no bounce) ---------- */
 function syncAppbarSpacer(){
   const inner = document.querySelector('.appbar .inner');
   const spacer = document.getElementById('appbar-spacer');
   if (!inner || !spacer) return;
-  const h = inner.offsetHeight;
-  spacer.style.height = h + 'px';
+  spacer.style.height = inner.offsetHeight + 'px'; // constant height
 }
-
 (function initAutoHideHeader(){
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let lastY = window.pageYOffset || document.documentElement.scrollTop || 0;
-  let hidden = false;
   const appbar = document.getElementById('appbar');
-  const spacer = document.getElementById('appbar-spacer');
+  let lastY = window.pageYOffset || 0;
+  let hidden = false;
+  let ticking = false;
 
-  function showBar(){
-    if(!hidden) return;
-    appbar.classList.remove('appbar--hidden');
-    spacer.classList.remove('is-hidden');
-    syncAppbarSpacer();
-    hidden = false;
+  function nearBottom(y){
+    const max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight;
+    return y >= max - 120; // bottom guard
   }
-  function hideBar(){
-    if(hidden) return;
-    appbar.classList.add('appbar--hidden');
-    spacer.classList.add('is-hidden');  // collapse reserved space smoothly
-    hidden = true;
-  }
+  function showBar(){ if(!hidden) return; appbar.classList.remove('appbar--hidden'); hidden=false; }
+  function hideBar(){ if(hidden) return; appbar.classList.add('appbar--hidden'); hidden=true; }
 
-  function onScroll(){
+  function update(){
+    ticking = false;
     const y = window.pageYOffset || document.documentElement.scrollTop || 0;
+    if (y <= 10 || nearBottom(y)){ showBar(); lastY = y; return; }
     const delta = y - lastY;
-    const threshold = 10;
-    if (Math.abs(delta) > threshold){
-      if (delta > 0 && y > 80){ hideBar(); }     // scrolling down
-      else { showBar(); }                        // scrolling up
-      lastY = y;
-    }
-    if (y <= 10) showBar();
+    if (Math.abs(delta) > 12){ if (delta > 0){ hideBar(); } else { showBar(); } lastY = y; }
   }
+  function onScroll(){ if (!ticking){ ticking = true; requestAnimationFrame(update); } }
 
   window.addEventListener('load', syncAppbarSpacer, {once:true});
   window.addEventListener('resize', syncAppbarSpacer, {passive:true});
   window.addEventListener('orientationchange', syncAppbarSpacer, {passive:true});
   if (document.fonts && document.fonts.ready) { document.fonts.ready.then(syncAppbarSpacer); }
-
-  if (!prefersReduced){
-    window.addEventListener('scroll', onScroll, {passive:true});
-  } else {
-    // If user prefers reduced motion, keep bar visible
-    showBar();
-  }
+  if (!prefersReduced){ window.addEventListener('scroll', onScroll, {passive:true}); } else { showBar(); }
 })();
 
 /* ---------- Init & Events ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
   const formEl = $("#trackerForm");
-  formEl.addEventListener("submit",(e)=>e.preventDefault()); // buttons drive actions
+  formEl.addEventListener("submit",(e)=>e.preventDefault());
 
   // Theme toggle
   const themeBtn = $("#themeToggle");
@@ -1073,7 +1046,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     document.documentElement.setAttribute("data-theme", cur);
     try{ localStorage.setItem(THEME_KEY, cur);}catch{}
     themeBtn.querySelector(".mi").textContent = (cur==="light" ? "light_mode" : "dark_mode");
-    syncAppbarSpacer(); // height can change due to contrast/fonts
+    syncAppbarSpacer();
   });
   themeBtn.querySelector(".mi").textContent =
     (document.documentElement.getAttribute("data-theme")==="light" ? "light_mode" : "dark_mode");
@@ -1241,7 +1214,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(!isInput && e.key==="/"){ e.preventDefault(); $("#search").focus(); }
   });
 
-  // PWA: register SW only on http/https
+  // SW only on http/https
   if (('serviceWorker' in navigator) && (location.protocol === 'http:' || location.protocol === 'https:')) {
     window.addEventListener("load", ()=>{
       navigator.serviceWorker.register("./sw.js", { scope: "./" })
