@@ -1,13 +1,19 @@
 {
+  "id": "./",
   "name": "Medication Tracker",
   "short_name": "Mary Jane",
-  "start_url": "./index.html",
+  "description": "Log medication sessions, doses, relief and side effects. Export data and generate doctor summaries.",
+  "start_url": ".",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "orientation": "portrait-primary",
   "background_color": "#070d18",
   "theme_color": "#8b5cf6",
+  "categories": ["health", "medical", "productivity"],
   "icons": [
-    { "src": "icons/icon-256.png", "sizes": "256x256", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+  { "src": "icons/icon-256.png", "sizes": "256x256", "type": "image/png" },
+  { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "prefer_related_applications": false
 }
