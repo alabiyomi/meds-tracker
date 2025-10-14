@@ -6,8 +6,8 @@ const APP_SHELL = [
   "./",
   "./index.html",          // GH Pages often serves index.html – harmless if missing
   "./manifest.webmanifest",
-  "./icon-256.png",
-  "./icon-512.png"         // if your file is icon-512.png.png change this line
+  "./icon-256.png.png",
+  "./icon-512.png.png"         // if your file is icon-512.png.png change this line
 ];
 
 self.addEventListener("install", (event) => {
