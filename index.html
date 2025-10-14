@@ -5,10 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Medication Tracker</title>
 
-<!-- Manifest / Icons -->
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-256.png">
-<link rel="icon" href="icon-256.png"/>
+<!-- Base so relative paths work on GitHub Pages and locally -->
+<base href="./">
+
+<!-- Theme colors (for PWA/UI chrome) -->
+<meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<!-- Icons -->
+<link rel="icon" href="./icons/icon-256.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png">
+
+<!-- Inject manifest only on http(s) to avoid file:// CORS errors -->
+<script>
+  (function(){
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+      var link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = './manifest.webmanifest';
+      document.head.appendChild(link);
+    }
+  })();
+</script>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,6 +37,7 @@
 
 <style>
   :root{
+    /* Dark theme defaults */
     --md-sys-color-primary:#8b5cf6;
     --md-sys-color-primary-variant:#7c3aed;
     --md-sys-color-secondary:#94a3b8;
@@ -32,15 +53,19 @@
 
     --space-1:6px; --space-2:10px; --space-3:14px; --space-4:18px; --space-5:24px;
 
+    /* Section tints */
     --sec-form:#8b5cf6;
     --sec-entries:#14b8a6;
     --sec-summary:#38bdf8;
 
-    --appbar-min-h:64px;       /* reserve app bar height to reduce CLS */
-    --toolbar-min-h:52px;      /* reserve action row height */
+    /* Reserve heights to prevent CLS */
+    --appbar-min-h:64px;
+    --toolbar-min-h:52px;
+
     color-scheme: dark;
   }
-  /* Light theme */
+
+  /* Light theme override */
   [data-theme="light"]{
     --md-sys-color-surface:#ffffff;
     --md-sys-color-surface-variant:#f6f7fb;
@@ -53,15 +78,15 @@
   html,body{height:100%}
   body{
     margin:0;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", Inter, ui-sans-serif, sans-serif;
     background:var(--md-sys-color-surface-variant);
     color:var(--md-sys-color-on-surface);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
     text-rendering:optimizeLegibility;
   }
 
-  /* App bar (reserve height to avoid jump when wrapping) */
+  /* App Bar */
   .appbar{
     position:sticky; top:0; z-index:20;
     background: linear-gradient(180deg, rgba(139,92,246,.10), rgba(139,92,246,0)), var(--md-sys-color-surface);
@@ -71,12 +96,17 @@
   }
   .appbar .inner{
     max-width:1200px; margin-inline:auto; padding: var(--space-3);
-    display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap;
-    min-height:var(--appbar-min-h);
+    display:flex; align-items:center; gap:12px; justify-content:space-between;
+    flex-wrap:wrap;
+    min-height:var(--appbar-min-h); /* CLS guard */
   }
   .title{ display:flex; align-items:center; gap:12px; min-width:0; }
-  .title .icon{ font-family:"Material Symbols Outlined"; font-size:28px; color:var(--md-sys-color-primary); }
   .title h1{ font-size:clamp(1.05rem, 1.4vw + .7rem, 1.35rem); margin:0; font-weight:700; letter-spacing:.1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:62vw; }
+
+  /* Replace old Material icon with PNG logo */
+  .title .logo-img{
+    width:28px; height:28px; border-radius:8px; object-fit:contain; display:block;
+  }
 
   .wrap{ max-width:1200px; margin-inline:auto; padding: var(--space-4) var(--space-3); }
 
@@ -86,9 +116,10 @@
     border-radius:var(--radius);
     box-shadow: var(--shadow-1);
     padding: var(--space-4);
-    overflow:hidden; /* keep children within rounded corners */
+    overflow:hidden; /* keep children within corners */
   }
 
+  /* Section chip */
   .card[data-section]::before{
     content: attr(data-section);
     display:inline-block;
@@ -98,10 +129,9 @@
     font-weight:600; font-size:.92rem;
     background:#101b31; border:1px solid #223353; color:#d6d9ff;
   }
-  [data-theme="light"] .card[data-section]::before{
-    background:#eef2ff; border-color:#c7d2fe; color:#312e81;
-  }
+  [data-theme="light"] .card[data-section]::before{ background:#eef2ff; border-color:#c7d2fe; color:#312e81; }
 
+  /* Per-section tints */
   .section-form{
     background: linear-gradient(180deg, color-mix(in srgb, var(--sec-form) 12%, transparent), transparent), var(--md-sys-color-surface);
     border-color: color-mix(in srgb, var(--sec-form) 26%, var(--md-sys-color-outline));
@@ -131,12 +161,8 @@
   /* Inputs */
   .field label{ display:block; font-size:.92rem; color:var(--md-sys-color-secondary); margin-bottom:6px; }
   .input, select, textarea{
-    display:block;
-    inline-size:100%;
-    max-inline-size:100%;
-    min-inline-size:0;
-    width:100%;
-    min-width:0;
+    display:block; inline-size:100%; max-inline-size:100%; min-inline-size:0;
+    width:100%; min-width:0;
     padding:12px 12px;
     border:1px solid var(--md-sys-color-outline);
     border-radius:12px; background:#0d172b; color:var(--md-sys-color-on-surface);
@@ -146,9 +172,7 @@
   [data-theme="light"] .input, [data-theme="light"] select, [data-theme="light"] textarea{
     background:#ffffff; color:#111827; border-color:#e5e7eb;
   }
-  input[type="date"].input, input[type="time"].input{
-    appearance:none; -webkit-appearance:none; background-clip: padding-box;
-  }
+  input[type="date"].input, input[type="time"].input{ appearance:none; -webkit-appearance:none; background-clip: padding-box; }
   @supports (-webkit-touch-callout: none){
     input[type="date"].input, input[type="time"].input{
       inline-size:100%; max-inline-size:100%; min-inline-size:0 !important;
@@ -161,9 +185,7 @@
     box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 28%, transparent);
     background:#0f1c35;
   }
-  [data-theme="light"] .input:focus, [data-theme="light"] select:focus, [data-theme="light"] textarea:focus{
-    background:#ffffff;
-  }
+  [data-theme="light"] .input:focus, [data-theme="light"] select:focus, [data-theme="light"] textarea:focus{ background:#ffffff; }
   .error{
     border-color:var(--md-sys-color-error) !important;
     box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-error) 28%, transparent) !important;
@@ -189,9 +211,8 @@
     color:#fff; border-color:var(--md-sys-color-primary-variant);
     box-shadow:0 12px 24px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
   }
-  /* Light theme: make primary button text black */
+  /* Light theme: primary buttons text black */
   [data-theme="light"] .btn-primary{ color:#111827; }
-  .btn-primary .mi{ color:inherit; }   
   .btn-tonal{ background:#121e37; border-color:#1b2a45; color:#c7b9ff; }
   [data-theme="light"] .btn-tonal{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
   .btn-danger{ border-color:#3b1c23; background:#221117; color:#ffb3b3; }
@@ -201,7 +222,7 @@
   .btn-chip{ border-radius:999px; padding:8px 12px; border-color:#1b2840; background:#111d34; }
   [data-theme="light"] .btn-chip{ background:#eef2ff; border-color:#c7d2fe; color:#312e81; }
 
-  /* Pills / status */
+  /* Pills */
   .pill{ padding:6px 12px; border-radius:999px; font-size:.88rem; background:#101b31; border:1px solid #223353; color:#d6d9ff; }
   [data-theme="light"] .pill{ background:#eef2ff; border-color:#c7d2fe; color:#1e293b; }
   #status{ min-width:72px; text-align:center; }
@@ -246,7 +267,7 @@
 
   .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
-  /* Mobile tuning */
+  /* Mobile */
   @media (max-width: 1100px){
     .col-6,.col-4,.col-3,.col-8{grid-column:span 12;}
     .row{ grid-template-columns: repeat(6,1fr); }
@@ -261,10 +282,10 @@
     .actions > *{ flex:0 0 auto; }
   }
 
-  /* CLS: reserve space for dynamic areas */
+  /* CLS guards for dynamic areas */
   #templatesBar{ min-height:56px; }
   .stats{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; min-height:40px; }
-  #summaryText{ min-height:160px; } /* reserve space for generated summary */
+  #summaryText{ min-height:160px; }
 </style>
 
 <!-- Early theme to avoid flash/CLS -->
@@ -283,7 +304,8 @@
   <div class="appbar">
     <div class="inner">
       <div class="title">
-        <span class="icon" aria-hidden="true">medication</span>
+        <!-- PNG logo instead of Material icon -->
+        <img class="logo-img" src="./icons/icon-256.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
         <h1>Medication Tracker</h1>
       </div>
       <div class="actions">
@@ -304,7 +326,7 @@
   </div>
 
   <main class="wrap">
-    <!-- Form (now a real <form> to avoid reparenting CLS) -->
+    <!-- Form -->
     <section class="card section-form" aria-label="Log a new session" data-section="Log Session">
       <div class="controls" style="justify-content:space-between; margin-bottom:6px;">
         <div class="controls" style="gap:8px;">
@@ -314,6 +336,7 @@
         <span id="reliefPreview" class="pill">Relief: —</span>
       </div>
 
+      <!-- keep as a real form to avoid CLS -->
       <form id="trackerForm" novalidate>
         <div class="row" id="formGrid">
           <div class="col-4 field">
@@ -389,7 +412,6 @@
             <textarea class="input" id="notes" placeholder="Context, sleep quality, appetite, dreams, etc."></textarea>
           </div>
         </div>
-        <!-- disable default submit; buttons above handle actions -->
         <button type="submit" hidden aria-hidden="true"></button>
       </form>
 
@@ -531,7 +553,9 @@
       </div>
     </div>
   </div>
-  <script>
+
+<!-- JS (no charts) -->
+<script>
 /* ---------- Keys & Globals ---------- */
 const KEY="mmj_entries_v1", UI_KEY="mmj_ui_state_v1", DRAFT_KEY="mmj_draft_v1";
 const SETTINGS_KEY="mmj_settings_v1", TPL_KEY="mmj_templates_v1", THEME_KEY="mmj_theme_v1";
@@ -555,7 +579,7 @@ function setStatus(msg, cls="pill"){ statusPill.textContent=msg; statusPill.clas
 function getSettings(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { dupPrevent:true, exportFiltered:false }; }catch{ return { dupPrevent:true, exportFiltered:false }; } }
 function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
 
-/* ---------- CRC32 ---------- */
+/* ---------- CRC32 for export integrity ---------- */
 const CRC32_TABLE = (()=>{ let c, table=[]; for (let n=0; n<256; n++){ c=n; for (let k=0;k<8;k++){ c = (c&1)? (0xEDB88320 ^ (c>>>1)) : (c>>>1); } table[n]=c; } return table; })();
 function crc32(str){ let crc = 0 ^ (-1); for (let i=0; i<str.length; i++){ crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ str.charCodeAt(i)) & 0xFF]; } return (crc ^ (-1)) >>> 0; }
 
@@ -595,7 +619,7 @@ function download(name,content,type="text/plain"){ const blob=new Blob([content]
 function localFileDate(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
 function localDateStr(d=new Date()){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
 
-/* ---------- Suggest ---------- */
+/* ---------- Suggestions ---------- */
 const SPLIT_RE=/[,\/;+&|]/;
 function tokenize(s){ return String(s||"").split(SPLIT_RE).map(t=>t.trim()).filter(t=>t.length>=2); }
 function getRecentTokens(field, n=20){
@@ -614,6 +638,7 @@ function attachSuggest(inputId, tokensGetter){
     input.parentElement.style.position = "relative";
   }
   const box=document.createElement("div"); box.className="suggest-box"; box.hidden=true; input.after(box);
+  /* ARIA */
   box.setAttribute("role","listbox");
   box.setAttribute("id", inputId + "-listbox");
   input.setAttribute("aria-controls", box.id);
@@ -764,7 +789,7 @@ function loadUIState(){
   }catch{}
 }
 
-/* ---------- Filtering & Table ---------- */
+/* ---------- Filtering ---------- */
 function getFilteredEntries(){
   const q=$("#search").value.toLowerCase(), fM=$("#filterMethod").value, fF=$("#filterForm").value, fFrom=$("#filterFrom").value, fTo=$("#filterTo").value;
   return getEntries().filter(e=>{
@@ -778,8 +803,7 @@ function getFilteredEntries(){
   });
 }
 
-function toCSV(arr){ const entries=arr||getEntries(); const cols=["date","time","strain","thc_cbd","form","method","dose","reason","before","after","relief","onset","duration","side_effects","environment","notes"]; const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`; const lines=[cols.join(",")]; for(const e of entries){ lines.push(cols.map(k=>esc(e[k])).join(",")); } return lines.join("\n"); }
-
+/* ---------- Table ---------- */
 function renderTable(){
   const tbody=$("#table tbody"); tbody.innerHTML="";
   const sort=$("#sortBy").value; const rows=getFilteredEntries().slice();
@@ -830,7 +854,7 @@ function renderTable(){
     `<span class="pill">Avg THC (mg): ${avgTHC}</span>`;
 }
 
-/* ---------- Templates (seed once, fix delete-last bug) ---------- */
+/* ---------- Templates (seed only once; no auto-reseed on empty) ---------- */
 function defaultTemplates(){
   return [
     {id: uid(), name:"Evening Vape for Sleep", pinned:true,
@@ -877,6 +901,7 @@ function applyTemplate(t){
   setStatus(`Template applied: ${t.name}`,"pill ok");
 }
 
+/* ---------- Template Modal (CRUD) ---------- */
 function openTplModal(){ const m=$("#tplModal"); renderTplList(); showTplListView(); m.hidden=false; m.classList.add("is-open"); document.body.style.overflow="hidden"; }
 function closeTplModal(){ const m=$("#tplModal"); m.classList.remove("is-open"); m.hidden=true; document.body.style.overflow=""; }
 function showTplListView(){ $("#tplListView").hidden=false; $("#tplEditView").hidden=true; }
@@ -973,7 +998,7 @@ function generateDoctorSummary(range="30"){
 /* ---------- Init & Events ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
   const formEl = $("#trackerForm");
-  formEl.addEventListener("submit",(e)=>e.preventDefault()); // keep buttons in control
+  formEl.addEventListener("submit",(e)=>e.preventDefault()); // buttons drive actions
 
   // Theme toggle
   const themeBtn = $("#themeToggle");
@@ -1148,9 +1173,12 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(!isInput && e.key==="/"){ e.preventDefault(); $("#search").focus(); }
   });
 
-  // PWA
-  if("serviceWorker" in navigator){
-    window.addEventListener("load", ()=>{ navigator.serviceWorker.register("./sw.js").catch(()=>{}); });
+  // PWA: register SW only on http/https
+  if (('serviceWorker' in navigator) && (location.protocol === 'http:' || location.protocol === 'https:')) {
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("./sw.js", { scope: "./" })
+        .catch(err => console.debug("SW register failed:", err));
+    });
   }
 });
 
@@ -1163,4 +1191,3 @@ function attachErrorClearing(){ requiredFields.forEach(sel=>{ const el=$(sel); c
 </script>
 </body>
 </html>
-
