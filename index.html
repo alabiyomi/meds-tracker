@@ -1004,6 +1004,7 @@ function syncAppbarSpacer(){
   if (!inner || !spacer) return;
   spacer.style.height = inner.offsetHeight + 'px'; // constant height
 }
+/* ---------- APP BAR: auto-hide shows ONLY on scroll-up (never auto-show at bottom) ---------- */
 (function initAutoHideHeader(){
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const appbar = document.getElementById('appbar');
@@ -1011,28 +1012,66 @@ function syncAppbarSpacer(){
   let hidden = false;
   let ticking = false;
 
+  const BOTTOM_BUFFER = 160;    // px from the very bottom that we treat as "bottom zone"
+  const SHOW_THRESHOLD = 14;    // how much upward movement to show the bar
+  const HIDE_THRESHOLD = 10;    // how much downward movement to hide the bar
+
   function nearBottom(y){
-    const max = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight;
-    return y >= max - 120; // bottom guard
+    const max = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight
+    ) - window.innerHeight;
+    return y >= (max - BOTTOM_BUFFER);
   }
-  function showBar(){ if(!hidden) return; appbar.classList.remove('appbar--hidden'); hidden=false; }
-  function hideBar(){ if(hidden) return; appbar.classList.add('appbar--hidden'); hidden=true; }
+
+  function showBar(){ if (!hidden) return; appbar.classList.remove('appbar--hidden'); hidden = false; }
+  function hideBar(){ if (hidden) return; appbar.classList.add('appbar--hidden'); hidden = true; }
 
   function update(){
     ticking = false;
     const y = window.pageYOffset || document.documentElement.scrollTop || 0;
-    if (y <= 10 || nearBottom(y)){ showBar(); lastY = y; return; }
     const delta = y - lastY;
-    if (Math.abs(delta) > 12){ if (delta > 0){ hideBar(); } else { showBar(); } lastY = y; }
-  }
-  function onScroll(){ if (!ticking){ ticking = true; requestAnimationFrame(update); } }
 
-  window.addEventListener('load', syncAppbarSpacer, {once:true});
-  window.addEventListener('resize', syncAppbarSpacer, {passive:true});
-  window.addEventListener('orientationchange', syncAppbarSpacer, {passive:true});
+    if (y <= 10){
+      // At the very top: show it
+      showBar();
+    } else if (nearBottom(y)){
+      // In the bottom zone: NEVER force-show (prevents the header popping back in)
+      // Still allow hiding if the user pushes further down
+      if (delta > HIDE_THRESHOLD) hideBar();
+      // Ignore small upward rubber-band bounces here (do not show)
+    } else {
+      // Normal behavior: hide on scroll-down, show on scroll-up
+      if (delta > HIDE_THRESHOLD) {
+        hideBar();
+      } else if (delta < -SHOW_THRESHOLD) {
+        showBar();
+      }
+    }
+
+    lastY = y;
+  }
+
+  function onScroll(){
+    if (!ticking){
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+  }
+
+  // Keep the spacer height in sync so layout never shifts
+  window.addEventListener('load', syncAppbarSpacer, { once:true });
+  window.addEventListener('resize', syncAppbarSpacer, { passive:true });
+  window.addEventListener('orientationchange', syncAppbarSpacer, { passive:true });
   if (document.fonts && document.fonts.ready) { document.fonts.ready.then(syncAppbarSpacer); }
-  if (!prefersReduced){ window.addEventListener('scroll', onScroll, {passive:true}); } else { showBar(); }
+
+  if (!prefersReduced){
+    window.addEventListener('scroll', onScroll, { passive:true });
+  } else {
+    appbar.classList.remove('appbar--hidden'); // accessibility
+  }
 })();
+
 
 /* ---------- Init & Events ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
