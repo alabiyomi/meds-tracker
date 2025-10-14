@@ -5,22 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Medication Tracker</title>
 
-<!-- Base so relative paths work on GitHub Pages and locally -->
+<!-- Make relative paths (icons/manifest/SW) predictable locally & on GitHub Pages -->
 <base href="./">
 
-<!-- Theme colors (for PWA/UI chrome) -->
+<!-- Theme colors for PWA / browser UI -->
 <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<!-- Icons -->
-<link rel="icon" href="./icons/icon-256.png.png">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png.png">
+<!-- Icons (adjust filenames if your repo uses .png.png) -->
+<link rel="icon" href="./icons/icon-256.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png">
 
-<!-- Inject manifest only on http(s) to avoid file:// CORS errors -->
+<!-- Inject manifest only on http(s) so file:// doesn’t throw CORS -->
 <script>
-  (function(){
+  (function () {
     if (location.protocol === 'http:' || location.protocol === 'https:') {
       var link = document.createElement('link');
       link.rel = 'manifest';
@@ -58,8 +58,8 @@
     --sec-entries:#14b8a6;
     --sec-summary:#38bdf8;
 
-    /* Reserve heights to prevent CLS */
-    --appbar-min-h:64px;
+    /* CLS guards */
+    --appbar-min-h:64px;  /* reserved height for toolbar */
     --toolbar-min-h:52px;
 
     color-scheme: dark;
@@ -86,27 +86,40 @@
     text-rendering:optimizeLegibility;
   }
 
-  /* App Bar */
+  /* FIXED + AUTO-HIDE APP BAR */
   .appbar{
-    position:sticky; top:0; z-index:20;
-    background: linear-gradient(180deg, rgba(139,92,246,.10), rgba(139,92,246,0)), var(--md-sys-color-surface);
+    position:fixed; top:0; left:0; right:0;
+    z-index:1000;
+    background:
+      linear-gradient(180deg, rgba(139,92,246,.10), rgba(139,92,246,0)),
+      var(--md-sys-color-surface);
     border-bottom:1px solid var(--md-sys-color-outline);
     backdrop-filter:saturate(1.1) blur(6px);
+    -webkit-backdrop-filter:saturate(1.1) blur(6px);
     padding-top: env(safe-area-inset-top);
+    transform: translateY(0);
+    transition: transform .25s ease;
+    will-change: transform;
+  }
+  .appbar.appbar--hidden{
+    transform: translateY(calc(-100% - env(safe-area-inset-top)));
   }
   .appbar .inner{
     max-width:1200px; margin-inline:auto; padding: var(--space-3);
     display:flex; align-items:center; gap:12px; justify-content:space-between;
     flex-wrap:wrap;
-    min-height:var(--appbar-min-h); /* CLS guard */
+    min-height:var(--appbar-min-h); /* reserve height for CLS */
   }
+  /* Spacer to keep layout stable below the fixed appbar */
+  #appbar-spacer{
+    height: var(--appbar-min-h);
+    transition: height .25s ease;
+  }
+  #appbar-spacer.is-hidden{ height:0 !important; }
+
   .title{ display:flex; align-items:center; gap:12px; min-width:0; }
   .title h1{ font-size:clamp(1.05rem, 1.4vw + .7rem, 1.35rem); margin:0; font-weight:700; letter-spacing:.1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:62vw; }
-
-  /* Replace old Material icon with PNG logo */
-  .title .logo-img{
-    width:28px; height:28px; border-radius:8px; object-fit:contain; display:block;
-  }
+  .title .logo-img{ width:28px; height:28px; border-radius:8px; object-fit:contain; display:block; }
 
   .wrap{ max-width:1200px; margin-inline:auto; padding: var(--space-4) var(--space-3); }
 
@@ -116,10 +129,9 @@
     border-radius:var(--radius);
     box-shadow: var(--shadow-1);
     padding: var(--space-4);
-    overflow:hidden; /* keep children within corners */
+    overflow:hidden;
   }
 
-  /* Section chip */
   .card[data-section]::before{
     content: attr(data-section);
     display:inline-block;
@@ -131,19 +143,9 @@
   }
   [data-theme="light"] .card[data-section]::before{ background:#eef2ff; border-color:#c7d2fe; color:#312e81; }
 
-  /* Per-section tints */
-  .section-form{
-    background: linear-gradient(180deg, color-mix(in srgb, var(--sec-form) 12%, transparent), transparent), var(--md-sys-color-surface);
-    border-color: color-mix(in srgb, var(--sec-form) 26%, var(--md-sys-color-outline));
-  }
-  .section-entries{
-    background: linear-gradient(180deg, color-mix(in srgb, var(--sec-entries) 12%, transparent), transparent), var(--md-sys-color-surface);
-    border-color: color-mix(in srgb, var(--sec-entries) 26%, var(--md-sys-color-outline));
-  }
-  .section-summary{
-    background: linear-gradient(180deg, color-mix(in srgb, var(--sec-summary) 12%, transparent), transparent), var(--md-sys-color-surface);
-    border-color: color-mix(in srgb, var(--sec-summary) 26%, var(--md-sys-color-outline));
-  }
+  .section-form{ background:linear-gradient(180deg, color-mix(in srgb, var(--sec-form) 12%, transparent), transparent), var(--md-sys-color-surface); border-color: color-mix(in srgb, var(--sec-form) 26%, var(--md-sys-color-outline)); }
+  .section-entries{ background:linear-gradient(180deg, color-mix(in srgb, var(--sec-entries) 12%, transparent), transparent), var(--md-sys-color-surface); border-color: color-mix(in srgb, var(--sec-entries) 26%, var(--md-sys-color-outline)); }
+  .section-summary{ background:linear-gradient(180deg, color-mix(in srgb, var(--sec-summary) 12%, transparent), transparent), var(--md-sys-color-surface); border-color: color-mix(in srgb, var(--sec-summary) 26%, var(--md-sys-color-outline)); }
 
   .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; row-gap:6px; min-height:var(--toolbar-min-h); }
   .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
@@ -186,11 +188,7 @@
     background:#0f1c35;
   }
   [data-theme="light"] .input:focus, [data-theme="light"] select:focus, [data-theme="light"] textarea:focus{ background:#ffffff; }
-  .error{
-    border-color:var(--md-sys-color-error) !important;
-    box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-error) 28%, transparent) !important;
-    background:#261217 !important;
-  }
+  .error{ border-color:var(--md-sys-color-error) !important; box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-error) 28%, transparent) !important; background:#261217 !important; }
 
   /* Buttons */
   .btn{
@@ -206,13 +204,15 @@
   .btn:active{ transform: translateY(.5px); }
   .btn .mi{ font-family:"Material Symbols Outlined"; font-size:20px; color:inherit; }
   .btn .btn-label{ white-space:nowrap; }
+
   .btn-primary{
     background:linear-gradient(180deg, color-mix(in srgb, var(--md-sys-color-primary) 85%, #0b0b0b), var(--md-sys-color-primary));
     color:#fff; border-color:var(--md-sys-color-primary-variant);
     box-shadow:0 12px 24px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
   }
-  /* Light theme: primary buttons text black */
+  /* Light theme: primary button text black */
   [data-theme="light"] .btn-primary{ color:#111827; }
+
   .btn-tonal{ background:#121e37; border-color:#1b2a45; color:#c7b9ff; }
   [data-theme="light"] .btn-tonal{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; }
   .btn-danger{ border-color:#3b1c23; background:#221117; color:#ffb3b3; }
@@ -267,7 +267,7 @@
 
   .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
-  /* Mobile */
+  /* Mobile niceties */
   @media (max-width: 1100px){
     .col-6,.col-4,.col-3,.col-8{grid-column:span 12;}
     .row{ grid-template-columns: repeat(6,1fr); }
@@ -277,7 +277,9 @@
     .btn{ min-height:46px; }
     th,td{ padding:10px; }
     .title h1{ font-size:1.1rem; max-width:58vw; }
-    .actions{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; scrollbar-width:none; }
+    .actions{
+      overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; scrollbar-width:none;
+    }
     .actions::-webkit-scrollbar{ display:none; }
     .actions > *{ flex:0 0 auto; }
   }
@@ -301,11 +303,11 @@
 </head>
 <body>
   <!-- App Bar -->
-  <div class="appbar">
+  <div class="appbar" id="appbar">
     <div class="inner">
       <div class="title">
-        <!-- PNG logo instead of Material icon -->
-        <img class="logo-img" src="./icons/icon-256.png.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
+        <!-- If your icon is named icon-256.png.png, change src below to match -->
+        <img class="logo-img" src="./icons/icon-256.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
         <h1>Medication Tracker</h1>
       </div>
       <div class="actions">
@@ -324,6 +326,8 @@
       </div>
     </div>
   </div>
+  <!-- reserved space so content doesn't jump under the fixed bar -->
+  <div id="appbar-spacer" aria-hidden="true"></div>
 
   <main class="wrap">
     <!-- Form -->
@@ -336,7 +340,6 @@
         <span id="reliefPreview" class="pill">Relief: —</span>
       </div>
 
-      <!-- keep as a real form to avoid CLS -->
       <form id="trackerForm" novalidate>
         <div class="row" id="formGrid">
           <div class="col-4 field">
@@ -415,7 +418,6 @@
         <button type="submit" hidden aria-hidden="true"></button>
       </form>
 
-      <!-- Templates -->
       <div class="controls" id="templatesBar" style="margin-top:12px;">
         <span class="pill">Templates:</span>
         <!-- pinned templates auto-insert here -->
@@ -554,7 +556,7 @@
     </div>
   </div>
 
-<!-- JS (no charts) -->
+<!-- JS -->
 <script>
 /* ---------- Keys & Globals ---------- */
 const KEY="mmj_entries_v1", UI_KEY="mmj_ui_state_v1", DRAFT_KEY="mmj_draft_v1";
@@ -579,9 +581,19 @@ function setStatus(msg, cls="pill"){ statusPill.textContent=msg; statusPill.clas
 function getSettings(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { dupPrevent:true, exportFiltered:false }; }catch{ return { dupPrevent:true, exportFiltered:false }; } }
 function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
 
-/* ---------- CRC32 for export integrity ---------- */
+/* ---------- CRC32 ---------- */
 const CRC32_TABLE = (()=>{ let c, table=[]; for (let n=0; n<256; n++){ c=n; for (let k=0;k<8;k++){ c = (c&1)? (0xEDB88320 ^ (c>>>1)) : (c>>>1); } table[n]=c; } return table; })();
 function crc32(str){ let crc = 0 ^ (-1); for (let i=0; i<str.length; i++){ crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ str.charCodeAt(i)) & 0xFF]; } return (crc ^ (-1)) >>> 0; }
+
+/* ---------- CSV Export helper ---------- */
+function toCSV(arr){
+  const entries=arr||getEntries();
+  const cols=["date","time","strain","thc_cbd","form","method","dose","reason","before","after","relief","onset","duration","side_effects","environment","notes"];
+  const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const lines=[cols.join(",")];
+  for(const e of entries){ lines.push(cols.map(k=>esc(e[k])).join(",")); }
+  return lines.join("\n");
+}
 
 /* ---------- Dose parsing ---------- */
 function parsePotency(thc_cbd){
@@ -614,7 +626,7 @@ function computeDoseMg(entry){
   return { mgTHC: (mgTHC!=null? +mgTHC.toFixed(1): null), mgCBD: (mgCBD!=null? +mgCBD.toFixed(1): null) };
 }
 
-/* ---------- Utils ---------- */
+/* ---------- Misc Utils ---------- */
 function download(name,content,type="text/plain"){ const blob=new Blob([content],{type}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),0); }
 function localFileDate(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
 function localDateStr(d=new Date()){ const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,"0"); const day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
@@ -638,7 +650,6 @@ function attachSuggest(inputId, tokensGetter){
     input.parentElement.style.position = "relative";
   }
   const box=document.createElement("div"); box.className="suggest-box"; box.hidden=true; input.after(box);
-  /* ARIA */
   box.setAttribute("role","listbox");
   box.setAttribute("id", inputId + "-listbox");
   input.setAttribute("aria-controls", box.id);
@@ -739,7 +750,7 @@ function validateForm(){
   requiredFields.forEach(sel=>$(sel).classList.remove("error"));
   let firstBad=null;
   const need=["#date","#time","#strain","#thc_cbd","#dose","#reason"];
-  for(const sel of need){ if(!$(sel).value.trim()){ $(sel).classList.add("error"); if(!firstBad) firstBad=$(sel); } }
+  for(const sel of need){ if(!$(sel).value.trim()){ $(el=sel).classList.add("error"); if(!firstBad) firstBad=$(sel); } }
   if(!$("#form").value){ $("#form").classList.add("error"); if(!firstBad) firstBad=$("#form"); }
   if(!$("#method").value){ $("#method").classList.add("error"); if(!firstBad) firstBad=$("#method"); }
   const b=parseInt($("#before").value,10), a=parseInt($("#after").value,10);
@@ -854,7 +865,7 @@ function renderTable(){
     `<span class="pill">Avg THC (mg): ${avgTHC}</span>`;
 }
 
-/* ---------- Templates (seed only once; no auto-reseed on empty) ---------- */
+/* ---------- Templates ---------- */
 function defaultTemplates(){
   return [
     {id: uid(), name:"Evening Vape for Sleep", pinned:true,
@@ -995,6 +1006,61 @@ function generateDoctorSummary(range="30"){
   return lines.join("\n");
 }
 
+/* ---------- APP BAR: spacer sync + auto-hide ---------- */
+function syncAppbarSpacer(){
+  const inner = document.querySelector('.appbar .inner');
+  const spacer = document.getElementById('appbar-spacer');
+  if (!inner || !spacer) return;
+  const h = inner.offsetHeight;
+  spacer.style.height = h + 'px';
+}
+
+(function initAutoHideHeader(){
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let lastY = window.pageYOffset || document.documentElement.scrollTop || 0;
+  let hidden = false;
+  const appbar = document.getElementById('appbar');
+  const spacer = document.getElementById('appbar-spacer');
+
+  function showBar(){
+    if(!hidden) return;
+    appbar.classList.remove('appbar--hidden');
+    spacer.classList.remove('is-hidden');
+    syncAppbarSpacer();
+    hidden = false;
+  }
+  function hideBar(){
+    if(hidden) return;
+    appbar.classList.add('appbar--hidden');
+    spacer.classList.add('is-hidden');  // collapse reserved space smoothly
+    hidden = true;
+  }
+
+  function onScroll(){
+    const y = window.pageYOffset || document.documentElement.scrollTop || 0;
+    const delta = y - lastY;
+    const threshold = 10;
+    if (Math.abs(delta) > threshold){
+      if (delta > 0 && y > 80){ hideBar(); }     // scrolling down
+      else { showBar(); }                        // scrolling up
+      lastY = y;
+    }
+    if (y <= 10) showBar();
+  }
+
+  window.addEventListener('load', syncAppbarSpacer, {once:true});
+  window.addEventListener('resize', syncAppbarSpacer, {passive:true});
+  window.addEventListener('orientationchange', syncAppbarSpacer, {passive:true});
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(syncAppbarSpacer); }
+
+  if (!prefersReduced){
+    window.addEventListener('scroll', onScroll, {passive:true});
+  } else {
+    // If user prefers reduced motion, keep bar visible
+    showBar();
+  }
+})();
+
 /* ---------- Init & Events ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
   const formEl = $("#trackerForm");
@@ -1007,6 +1073,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     document.documentElement.setAttribute("data-theme", cur);
     try{ localStorage.setItem(THEME_KEY, cur);}catch{}
     themeBtn.querySelector(".mi").textContent = (cur==="light" ? "light_mode" : "dark_mode");
+    syncAppbarSpacer(); // height can change due to contrast/fonts
   });
   themeBtn.querySelector(".mi").textContent =
     (document.documentElement.getAttribute("data-theme")==="light" ? "light_mode" : "dark_mode");
@@ -1031,6 +1098,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   renderPinnedTemplates();
   renderTable();
+  syncAppbarSpacer();
 
   // Save / Update
   $("#saveBtn").addEventListener("click", ()=>{
