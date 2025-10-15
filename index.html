@@ -1085,20 +1085,6 @@ function syncAppbarSpacer(){
   spacer.style.height = inner.offsetHeight + 'px';
 }
 
-<script>
-  // …after function syncAppbarSpacer(){…}
-  (function observeAppbar(){
-    const inner = document.querySelector('.appbar .inner');
-    const spacer = document.getElementById('appbar-spacer');
-    if (!inner || !spacer || !('ResizeObserver' in window)) return;
-    const ro = new ResizeObserver(() => {
-      spacer.style.height = inner.offsetHeight + 'px';
-    });
-    ro.observe(inner);
-  })();
-</script>
-
-
 /* ---------- Auto-hide header: show on scroll up, never auto-show at bottom ---------- */
 (function initAutoHideHeader(){
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
