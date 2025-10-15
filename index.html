@@ -15,9 +15,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
 <!-- Icons (ensure these files exist in /icons) -->
-<link rel="icon" href="./icons/icon-256.png.png">
+<link rel="icon" href="./icons/icon-256.png.png" sizes="256x256" type="image/png">
 <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png.png">
-
+<link rel="apple-touch-icon" sizes="256x256" href="./icons/icon-256.png.png">
 
 <!-- Load manifest only on http(s) to avoid file:// CORS errors -->
 <script>
@@ -117,8 +117,14 @@
 
   .wrap{ max-width:1200px; margin-inline:auto; padding: var(--space-4) var(--space-3); }
 
-  .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; row-gap:6px; min-height:var(--toolbar-min-h); }
-  /* NEW: Pager tabs now live inside the appbar */
+  .actions{
+    display:flex; flex-wrap:wrap; gap:8px;
+    align-items:center; justify-content:flex-start;
+    row-gap:8px; min-height:var(--toolbar-min-h);
+  }
+  .actions > *{ align-self:center; } /* vertical alignment fix */
+
+  /* MOBILE PAGER HEADER: now disabled, acts as a section header */
   .appbar-tabs{ display:none; width:100%; }
   @media (max-width: 640px){
     .appbar-tabs{
@@ -131,6 +137,7 @@
     .appbar-tabs [aria-selected="true"]{
       outline:2px solid color-mix(in srgb, var(--md-sys-color-primary) 55%, transparent);
     }
+    .appbar-tabs .btn[disabled]{ pointer-events:none; opacity:.9; }
   }
 
   .card{
@@ -286,7 +293,7 @@
   @media (max-width: 1100px){
     .col-6,.col-4,.col-3,.col-8{grid-column:span 12;}
     .row{ grid-template-columns: repeat(6,1fr); }
-    .actions{ gap:6px; }
+    .actions{ gap:8px; }
   }
   @media (max-width: 640px){
     .btn{ min-height:46px; }
@@ -352,7 +359,7 @@
         <button class="btn btn-ghost" id="newBtn" type="button"><span class="mi" aria-hidden="true">note_add</span><span class="btn-label">New</span></button>
         <button class="btn btn-ghost" id="exportJsonBtn" type="button"><span class="mi" aria-hidden="true">ios_share</span><span class="btn-label">Export JSON</span></button>
         <button class="btn btn-ghost" id="exportCsvBtn" type="button"><span class="mi" aria-hidden="true">table</span><span class="btn-label">Export CSV</span></button>
-        <label class="btn btn-ghost" title="Import JSON">
+        <label class="btn btn-ghost" title="Import JSON" aria-label="Import JSON">
           <span class="mi" aria-hidden="true">file_open</span><span class="btn-label">Import</span>
           <input type="file" id="importJson" accept="application/json" style="display:none">
         </label>
@@ -362,15 +369,15 @@
         <span id="editingBadge" class="pill" style="display:none;">Editing…</span>
       </div>
 
-      <!-- MOBILE TABS: moved into the appbar, 3 equal buttons, aligned -->
+      <!-- MOBILE PAGER HEADER (DISABLED): visual headers only; scroll left/right to change sections -->
       <nav id="pagerNav" class="appbar-tabs" aria-label="Pages (mobile only)">
-        <button class="btn btn-chip" data-target="#page-log" role="tab" aria-selected="true">
+        <button class="btn btn-chip" data-target="#page-log" role="tab" aria-selected="true" disabled>
           <span class="mi" aria-hidden="true">edit_note</span><span class="btn-label">Log</span>
         </button>
-        <button class="btn btn-chip" data-target="#page-entries" role="tab" aria-selected="false">
+        <button class="btn btn-chip" data-target="#page-entries" role="tab" aria-selected="false" disabled>
           <span class="mi" aria-hidden="true">table</span><span class="btn-label">Entries</span>
         </button>
-        <button class="btn btn-chip" data-target="#page-summary" role="tab" aria-selected="false">
+        <button class="btn btn-chip" data-target="#page-summary" role="tab" aria-selected="false" disabled>
           <span class="mi" aria-hidden="true">summarize</span><span class="btn-label">Summary</span>
         </button>
       </nav>
@@ -1157,20 +1164,11 @@ function initMobilePager(){
   mq.addEventListener('change', e => setPagerActive(e.matches));
 
   function scrollToTopPage(){
-    // When switching tabs, always start from top of the page
+    // Always keep the document scrolled to the very top when you move pages
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
-  // Clicking a tab scrolls to that page + go to top
-  tabs.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const target = document.querySelector(btn.dataset.target);
-      if (target){
-        scrollToTopPage();
-        target.scrollIntoView({behavior:'smooth', inline:'start', block:'nearest'});
-      }
-    });
-  });
+  // Tabs are disabled visually; no click handlers needed.
 
   // Observe which page is most visible to update aria-selected and reset top when page changes via swipe
   let lastActiveId = '#page-log';
