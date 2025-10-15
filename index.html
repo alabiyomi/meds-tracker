@@ -14,10 +14,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<!-- Icons (ensure these files exist in /icons) -->
-<link rel="icon" href="./icons/icon-256.png.png" sizes="256x256" type="image/png">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png.png">
-<link rel="apple-touch-icon" sizes="256x256" href="./icons/icon-256.png.png">
+<!-- Icons (ensure files exist in /icons) -->
+<link rel="icon" href="./icons/icon-256.png" sizes="256x256" type="image/png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png">
+<link rel="apple-touch-icon" sizes="256x256" href="./icons/icon-256.png">
 
 <!-- Load manifest only on http(s) to avoid file:// CORS errors -->
 <script>
@@ -117,14 +117,33 @@
 
   .wrap{ max-width:1200px; margin-inline:auto; padding: var(--space-4) var(--space-3); }
 
+  /* === TOP ACTIONS — uniform grid === */
   .actions{
-    display:flex; flex-wrap:wrap; gap:8px;
-    align-items:center; justify-content:flex-start;
-    row-gap:8px; min-height:var(--toolbar-min-h);
+    /* Desktop/tablet: fluid row */
+    display:flex; flex-wrap:wrap; gap:12px; align-items:stretch;
+    min-height:var(--toolbar-min-h);
   }
-  .actions > *{ align-self:center; } /* vertical alignment fix */
+  /* Mobile: strict 3-column grid so every cell is same width/height */
+  @media (max-width: 640px){
+    .actions{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: var(--toolbar-min-h);
+      gap:12px;
+      align-items:stretch;
+      justify-items:stretch;
+    }
+    .actions > *{ width:100%; height:100%; }
+  }
+  /* Make the pill(s) behave like buttons in the grid for alignment */
+  .appbar .pill{
+    display:flex; align-items:center; justify-content:center;
+    width:100%; min-height:var(--toolbar-min-h);
+    font-weight:600;
+  }
+  .actions > label.btn{ display:flex; align-items:center; justify-content:center; }
 
-  /* MOBILE PAGER HEADER: now disabled, acts as a section header */
+  /* MOBILE PAGER HEADER (disabled buttons act as headers) */
   .appbar-tabs{ display:none; width:100%; }
   @media (max-width: 640px){
     .appbar-tabs{
@@ -133,7 +152,7 @@
       gap:8px;
       align-items:center;
     }
-    .appbar-tabs .btn{ min-height:46px; }
+    .appbar-tabs .btn{ min-height:46px; width:100%; }
     .appbar-tabs [aria-selected="true"]{
       outline:2px solid color-mix(in srgb, var(--md-sys-color-primary) 55%, transparent);
     }
@@ -232,7 +251,6 @@
     color:#fff; border-color:var(--md-sys-color-primary-variant);
     box-shadow:0 12px 24px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
   }
-  /* Light theme: primary button text black for readability */
   [data-theme="light"] .btn-primary{ color:#111827; }
 
   .btn-tonal{ background:#121e37; border-color:#1b2a45; color:#c7b9ff; }
@@ -293,39 +311,23 @@
   @media (max-width: 1100px){
     .col-6,.col-4,.col-3,.col-8{grid-column:span 12;}
     .row{ grid-template-columns: repeat(6,1fr); }
-    .actions{ gap:8px; }
   }
   @media (max-width: 640px){
     .btn{ min-height:46px; }
     th,td{ padding:10px; }
     .title h1{ font-size:1.1rem; max-width:58vw; }
 
-    /* Activate pager layout only on mobile */
     body.pager-active .wrap{
-      display:flex;
-      flex-direction:row;
-      gap:0;
-      overflow-x:auto;
-      scroll-snap-type:x mandatory;
-      scroll-behavior:smooth;
-      padding-left:0;
-      padding-right:0;
-      -webkit-overflow-scrolling: touch;
+      display:flex; flex-direction:row; gap:0; overflow-x:auto;
+      scroll-snap-type:x mandatory; scroll-behavior:smooth;
+      padding-left:0; padding-right:0; -webkit-overflow-scrolling: touch;
     }
-    /* Each section becomes a full-width page */
     body.pager-active .wrap > section.card{
-      flex:0 0 100%;
-      scroll-snap-align:start;
-      border-radius:0;
-      margin:0;
+      flex:0 0 100%; scroll-snap-align:start; border-radius:0; margin:0;
       min-height:calc(100dvh - var(--appbar-min-h) - 12px);
       padding: var(--space-4) var(--space-3) var(--space-4);
     }
-
-    /* Hide horizontal scrollbar cosmetics */
     .wrap::-webkit-scrollbar{ display:none; }
-
-    /* Keep inner horizontal scrollers (like your table) from “chaining” to page swipe */
     .table-wrap{ overscroll-behavior-inline: contain; }
   }
 
@@ -351,25 +353,29 @@
   <div class="appbar" id="appbar">
     <div class="inner">
       <div class="title">
-        <img class="logo-img" src="./icons/icon-256.png.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
+        <img class="logo-img" src="./icons/icon-256.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
         <h1>Medication Tracker</h1>
       </div>
+
+      <!-- UNIFORM GRID OF CONTROLS -->
       <div class="actions" role="toolbar" aria-label="Main actions">
         <button class="btn btn-primary" id="saveBtn" type="button"><span class="mi" aria-hidden="true">save</span><span class="btn-label">Save</span></button>
         <button class="btn btn-ghost" id="newBtn" type="button"><span class="mi" aria-hidden="true">note_add</span><span class="btn-label">New</span></button>
         <button class="btn btn-ghost" id="exportJsonBtn" type="button"><span class="mi" aria-hidden="true">ios_share</span><span class="btn-label">Export JSON</span></button>
+
         <button class="btn btn-ghost" id="exportCsvBtn" type="button"><span class="mi" aria-hidden="true">table</span><span class="btn-label">Export CSV</span></button>
         <label class="btn btn-ghost" title="Import JSON" aria-label="Import JSON">
           <span class="mi" aria-hidden="true">file_open</span><span class="btn-label">Import</span>
           <input type="file" id="importJson" accept="application/json" style="display:none">
         </label>
         <button class="btn btn-danger" id="resetBtn" type="button" title="Deletes all entries in this browser"><span class="mi" aria-hidden="true">delete_forever</span><span class="btn-label">Erase All</span></button>
+
         <button class="btn btn-ghost" id="themeToggle" type="button" title="Toggle dark/light"><span class="mi" aria-hidden="true">dark_mode</span><span class="btn-label">Theme</span></button>
         <span id="status" class="pill" role="status" aria-live="polite">Ready</span>
         <span id="editingBadge" class="pill" style="display:none;">Editing…</span>
       </div>
 
-      <!-- MOBILE PAGER HEADER (DISABLED): visual headers only; scroll left/right to change sections -->
+      <!-- MOBILE PAGE HEADERS (disabled buttons) -->
       <nav id="pagerNav" class="appbar-tabs" aria-label="Pages (mobile only)">
         <button class="btn btn-chip" data-target="#page-log" role="tab" aria-selected="true" disabled>
           <span class="mi" aria-hidden="true">edit_note</span><span class="btn-label">Log</span>
@@ -383,7 +389,7 @@
       </nav>
     </div>
   </div>
-  <!-- Reserve space to avoid content jump under fixed header -->
+  <!-- Spacer to avoid jump under fixed header -->
   <div id="appbar-spacer" aria-hidden="true"></div>
 
   <main class="wrap">
@@ -1071,15 +1077,15 @@ function generateDoctorSummary(range="30"){
   return lines.join("\n");
 }
 
-/* ---------- APP BAR: spacer sync ---------- */
+/* ---------- APP BAR spacer sync ---------- */
 function syncAppbarSpacer(){
   const inner = document.querySelector('.appbar .inner');
   const spacer = document.getElementById('appbar-spacer');
   if (!inner || !spacer) return;
-  spacer.style.height = inner.offsetHeight + 'px'; // constant height
+  spacer.style.height = inner.offsetHeight + 'px';
 }
 
-/* ---------- APP BAR: auto-hide shows ONLY on scroll-up (never auto-show at bottom) ---------- */
+/* ---------- Auto-hide header: show on scroll up, never auto-show at bottom ---------- */
 (function initAutoHideHeader(){
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const appbar = document.getElementById('appbar');
@@ -1087,9 +1093,9 @@ function syncAppbarSpacer(){
   let hidden = false;
   let ticking = false;
 
-  const BOTTOM_BUFFER = 160;    // px from the very bottom considered a "bottom zone"
-  const SHOW_THRESHOLD = 14;    // upward movement to show the bar
-  const HIDE_THRESHOLD = 10;    // downward movement to hide the bar
+  const BOTTOM_BUFFER = 160;
+  const SHOW_THRESHOLD = 14;
+  const HIDE_THRESHOLD = 10;
 
   function nearBottom(y){
     const max = Math.max(
@@ -1108,29 +1114,16 @@ function syncAppbarSpacer(){
     const delta = y - lastY;
 
     if (y <= 10){
-      // At the very top: show it
       showBar();
     } else if (nearBottom(y)){
-      // In the bottom zone: NEVER force-show; allow hide if still moving down
       if (delta > HIDE_THRESHOLD) hideBar();
     } else {
-      // Normal behavior: hide on scroll-down, show on scroll-up
-      if (delta > HIDE_THRESHOLD) {
-        hideBar();
-      } else if (delta < -SHOW_THRESHOLD) {
-        showBar();
-      }
+      if (delta > HIDE_THRESHOLD) hideBar();
+      else if (delta < -SHOW_THRESHOLD) showBar();
     }
-
     lastY = y;
   }
-
-  function onScroll(){
-    if (!ticking){
-      ticking = true;
-      requestAnimationFrame(update);
-    }
-  }
+  function onScroll(){ if (!ticking){ ticking = true; requestAnimationFrame(update); } }
 
   window.addEventListener('load', syncAppbarSpacer, { once:true });
   window.addEventListener('resize', syncAppbarSpacer, { passive:true });
@@ -1140,60 +1133,38 @@ function syncAppbarSpacer(){
   if (!prefersReduced){
     window.addEventListener('scroll', onScroll, { passive:true });
   } else {
-    appbar.classList.remove('appbar--hidden'); // accessibility
+    appbar.classList.remove('appbar--hidden');
   }
 })();
 
 /* ---------- Mobile Pager ---------- */
 function initMobilePager(){
   const container = document.querySelector('main.wrap');
-  const pages = ['#page-log', '#page-entries', '#page-summary']
-    .map(sel => document.querySelector(sel))
-    .filter(Boolean);
+  const pages = ['#page-log', '#page-entries', '#page-summary'].map(sel => document.querySelector(sel)).filter(Boolean);
   const tabs = Array.from(document.querySelectorAll('#pagerNav [data-target]'));
   if (!container || !pages.length) return;
 
   const mq = window.matchMedia('(max-width: 640px)');
+  function setPagerActive(on){ document.body.classList.toggle('pager-active', !!on); }
+  setPagerActive(mq.matches); mq.addEventListener('change', e => setPagerActive(e.matches));
 
-  function setPagerActive(on){
-    document.body.classList.toggle('pager-active', !!on);
-  }
+  function scrollToTopPage(){ window.scrollTo({ top: 0, behavior: 'auto' }); }
 
-  // Apply now and on resize
-  setPagerActive(mq.matches);
-  mq.addEventListener('change', e => setPagerActive(e.matches));
-
-  function scrollToTopPage(){
-    // Always keep the document scrolled to the very top when you move pages
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }
-
-  // Tabs are disabled visually; no click handlers needed.
-
-  // Observe which page is most visible to update aria-selected and reset top when page changes via swipe
   let lastActiveId = '#page-log';
   const io = new IntersectionObserver((entries)=>{
     let best = null, bestRatio = 0;
-    entries.forEach(en=>{
-      if (en.isIntersecting && en.intersectionRatio > bestRatio){
-        best = en.target; bestRatio = en.intersectionRatio;
-      }
-    });
+    entries.forEach(en=>{ if (en.isIntersecting && en.intersectionRatio > bestRatio){ best = en.target; bestRatio = en.intersectionRatio; } });
     if (best){
       const id = '#'+best.id;
       tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.target===id)));
       if (id !== lastActiveId){
         lastActiveId = id;
-        if (document.body.classList.contains('pager-active')) {
-          scrollToTopPage();
-        }
+        if (document.body.classList.contains('pager-active')) scrollToTopPage();
       }
     }
   }, { root: container, threshold:[0.5, 0.75, 1] });
-
   pages.forEach(p => io.observe(p));
 
-  // Optional: keyboard left/right to switch pages when container is focused
   container.setAttribute('tabindex','0');
   container.addEventListener('keydown', (e)=>{
     if (e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
@@ -1364,9 +1335,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(act==="edit"){ tplEditingId=id; loadTemplateEditor(arr[idx]); showTplEditView(); }
     if(act==="pin"){ arr[idx].pinned = !arr[idx].pinned; setTemplates(arr); renderTplList(); renderPinnedTemplates(); }
     if(act==="del"){
-      if(confirm("Delete this template?")){
-        arr.splice(idx,1); setTemplates(arr); renderTplList(); renderPinnedTemplates(); setStatus("Template deleted","pill bad");
-      }
+      if(confirm("Delete this template?")){ arr.splice(idx,1); setTemplates(arr); renderTplList(); renderPinnedTemplates(); setStatus("Template deleted","pill bad"); }
     }
   });
 
