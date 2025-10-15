@@ -14,10 +14,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<!-- Icons (ensure these files exist in /icons) -->
-<link rel="icon" href="./icons/icon-256.png.png">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png.png">
-
 <!-- Load manifest only on http(s) to avoid file:// CORS errors -->
 <script>
   (function () {
@@ -116,10 +112,26 @@
 
   .wrap{ max-width:1200px; margin-inline:auto; padding: var(--space-4) var(--space-3); }
 
+  .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; row-gap:6px; min-height:var(--toolbar-min-h); }
+  /* NEW: Pager tabs now live inside the appbar */
+  .appbar-tabs{ display:none; width:100%; }
+  @media (max-width: 640px){
+    .appbar-tabs{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:8px;
+      align-items:center;
+    }
+    .appbar-tabs .btn{ min-height:46px; }
+    .appbar-tabs [aria-selected="true"]{
+      outline:2px solid color-mix(in srgb, var(--md-sys-color-primary) 55%, transparent);
+    }
+  }
+
   .card{
     background:var(--md-sys-color-surface);
     border:1px solid var(--md-sys-color-outline);
-    border-radius:var(--radius);
+    border-radius:16px;
     box-shadow: var(--shadow-1);
     padding: var(--space-4);
     overflow:hidden;
@@ -133,7 +145,7 @@
   }
   [data-theme="light"] .card[data-section]::before{ background:#eef2ff; border-color:#c7d2fe; color:#312e81; }
 
-  /* Uniform section titles (bigger than body text, same across sections) */
+  /* Uniform section titles */
   .section-title{
     margin:4px 0 var(--space-3) 0;
     font-size: clamp(1.05rem, 1.2vw + .8rem, 1.25rem);
@@ -146,7 +158,6 @@
   .section-entries{ background:linear-gradient(180deg, color-mix(in srgb, var(--sec-entries) 12%, transparent), transparent), var(--md-sys-color-surface); border-color: color-mix(in srgb, var(--sec-entries) 26%, var(--md-sys-color-outline)); }
   .section-summary{ background:linear-gradient(180deg, color-mix(in srgb, var(--sec-summary) 12%, transparent), transparent), var(--md-sys-color-surface); border-color: color-mix(in srgb, var(--sec-summary) 26%, var(--md-sys-color-outline)); }
 
-  .actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; row-gap:6px; min-height:var(--toolbar-min-h); }
   .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 
   /* Grid */
@@ -189,7 +200,7 @@
   [data-theme="light"] .input:focus, [data-theme="light"] select:focus, [data-theme="light"] textarea:focus{ background:#ffffff; }
   .error{ border-color:var(--md-sys-color-error) !important; box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-error) 28%, transparent) !important; background:#261217 !important; }
 
-  /* Buttons: uniform size/alignment */
+  /* Buttons (uniform) */
   .btn{
     display:inline-flex; align-items:center; gap:8px; justify-content:center;
     border:1px solid var(--md-sys-color-outline); color:var(--md-sys-color-on-surface); background:#0f1a2e;
@@ -267,8 +278,6 @@
   .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
   /* Mobile pager: horizontal pages via scroll-snap */
-  .pager-nav{ display:none; }
-
   @media (max-width: 1100px){
     .col-6,.col-4,.col-3,.col-8{grid-column:span 12;}
     .row{ grid-template-columns: repeat(6,1fr); }
@@ -301,23 +310,6 @@
       padding: var(--space-4) var(--space-3) var(--space-4);
     }
 
-    /* Small sticky tabs under the fixed header */
-    .pager-nav{
-      position:sticky;
-      top:calc(var(--appbar-min-h));
-      z-index:5;
-      display:flex;
-      gap:8px;
-      padding:8px var(--space-3);
-      background: linear-gradient(180deg, rgba(0,0,0,.06), transparent);
-      -webkit-backdrop-filter: blur(6px);
-      backdrop-filter: blur(6px);
-    }
-    .pager-nav button{ flex:1; min-width:0; }
-    .pager-nav [aria-selected="true"]{
-      outline:2px solid color-mix(in srgb, var(--md-sys-color-primary) 55%, transparent);
-    }
-
     /* Hide horizontal scrollbar cosmetics */
     .wrap::-webkit-scrollbar{ display:none; }
 
@@ -347,40 +339,40 @@
   <div class="appbar" id="appbar">
     <div class="inner">
       <div class="title">
-        <img class="logo-img" src="./icons/icon-256.png.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
+        <img class="logo-img" src="./icons/icon-256.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
         <h1>Medication Tracker</h1>
       </div>
-      <div class="actions">
+      <div class="actions" role="toolbar" aria-label="Main actions">
         <button class="btn btn-primary" id="saveBtn" type="button"><span class="mi" aria-hidden="true">save</span><span class="btn-label">Save</span></button>
-        <button class="btn btn-ghost" id="newBtn" type="button"><span class="mi" aria-hidden="true">note_add</span>New</button>
-        <button class="btn btn-ghost" id="exportJsonBtn" type="button"><span class="mi" aria-hidden="true">ios_share</span>Export JSON</button>
-        <button class="btn btn-ghost" id="exportCsvBtn" type="button"><span class="mi" aria-hidden="true">table</span>Export CSV</button>
+        <button class="btn btn-ghost" id="newBtn" type="button"><span class="mi" aria-hidden="true">note_add</span><span class="btn-label">New</span></button>
+        <button class="btn btn-ghost" id="exportJsonBtn" type="button"><span class="mi" aria-hidden="true">ios_share</span><span class="btn-label">Export JSON</span></button>
+        <button class="btn btn-ghost" id="exportCsvBtn" type="button"><span class="mi" aria-hidden="true">table</span><span class="btn-label">Export CSV</span></button>
         <label class="btn btn-ghost" title="Import JSON">
-          <span class="mi" aria-hidden="true">file_open</span>Import
+          <span class="mi" aria-hidden="true">file_open</span><span class="btn-label">Import</span>
           <input type="file" id="importJson" accept="application/json" style="display:none">
         </label>
-        <button class="btn btn-danger" id="resetBtn" type="button" title="Deletes all entries in this browser"><span class="mi" aria-hidden="true">delete_forever</span>Erase All</button>
+        <button class="btn btn-danger" id="resetBtn" type="button" title="Deletes all entries in this browser"><span class="mi" aria-hidden="true">delete_forever</span><span class="btn-label">Erase All</span></button>
         <button class="btn btn-ghost" id="themeToggle" type="button" title="Toggle dark/light"><span class="mi" aria-hidden="true">dark_mode</span><span class="btn-label">Theme</span></button>
         <span id="status" class="pill" role="status" aria-live="polite">Ready</span>
         <span id="editingBadge" class="pill" style="display:none;">Editing…</span>
       </div>
+
+      <!-- MOBILE TABS: moved into the appbar, 3 equal buttons, aligned -->
+      <nav id="pagerNav" class="appbar-tabs" aria-label="Pages (mobile only)">
+        <button class="btn btn-chip" data-target="#page-log" role="tab" aria-selected="true">
+          <span class="mi" aria-hidden="true">edit_note</span><span class="btn-label">Log</span>
+        </button>
+        <button class="btn btn-chip" data-target="#page-entries" role="tab" aria-selected="false">
+          <span class="mi" aria-hidden="true">table</span><span class="btn-label">Entries</span>
+        </button>
+        <button class="btn btn-chip" data-target="#page-summary" role="tab" aria-selected="false">
+          <span class="mi" aria-hidden="true">summarize</span><span class="btn-label">Summary</span>
+        </button>
+      </nav>
     </div>
   </div>
   <!-- Reserve space to avoid content jump under fixed header -->
   <div id="appbar-spacer" aria-hidden="true"></div>
-
-  <!-- Mobile pager tabs -->
-  <nav id="pagerNav" class="pager-nav" aria-label="Pages">
-    <button class="btn btn-chip" data-target="#page-log" role="tab" aria-selected="true">
-      <span class="mi" aria-hidden="true">edit_note</span>Log
-    </button>
-    <button class="btn btn-chip" data-target="#page-entries" role="tab" aria-selected="false">
-      <span class="mi" aria-hidden="true">table</span>Entries
-    </button>
-    <button class="btn btn-chip" data-target="#page-summary" role="tab" aria-selected="false">
-      <span class="mi" aria-hidden="true">summarize</span>Summary
-    </button>
-  </nav>
 
   <main class="wrap">
     <!-- Form -->
@@ -418,14 +410,14 @@
             <label for="thc_cbd">THC/CBD</label>
             <input class="input" type="text" id="thc_cbd" placeholder="THC 18% / CBD 1%" required autocomplete="off">
           </div>
-            <div class="col-4 field">
-              <label for="form">Form</label>
-              <select class="input" id="form" required>
-                <option value="" disabled selected>Select…</option>
-                <option>Flower</option><option>Vape</option><option>Oil</option>
-                <option>Tincture</option><option>Edible</option><option>Topical</option>
-              </select>
-            </div>
+          <div class="col-4 field">
+            <label for="form">Form</label>
+            <select class="input" id="form" required>
+              <option value="" disabled selected>Select…</option>
+              <option>Flower</option><option>Vape</option><option>Oil</option>
+              <option>Tincture</option><option>Edible</option><option>Topical</option>
+            </select>
+          </div>
 
           <div class="col-4 field">
             <label for="method">Method</label>
@@ -1159,17 +1151,24 @@ function initMobilePager(){
   setPagerActive(mq.matches);
   mq.addEventListener('change', e => setPagerActive(e.matches));
 
-  // Clicking a tab scrolls to that page
+  function scrollToTopPage(){
+    // When switching tabs, always start from top of the page
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  // Clicking a tab scrolls to that page + go to top
   tabs.forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const target = document.querySelector(btn.dataset.target);
       if (target){
+        scrollToTopPage();
         target.scrollIntoView({behavior:'smooth', inline:'start', block:'nearest'});
       }
     });
   });
 
-  // Observe which page is most visible to update aria-selected
+  // Observe which page is most visible to update aria-selected and reset top when page changes via swipe
+  let lastActiveId = '#page-log';
   const io = new IntersectionObserver((entries)=>{
     let best = null, bestRatio = 0;
     entries.forEach(en=>{
@@ -1180,6 +1179,12 @@ function initMobilePager(){
     if (best){
       const id = '#'+best.id;
       tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.target===id)));
+      if (id !== lastActiveId){
+        lastActiveId = id;
+        if (document.body.classList.contains('pager-active')) {
+          scrollToTopPage();
+        }
+      }
     }
   }, { root: container, threshold:[0.5, 0.75, 1] });
 
@@ -1192,6 +1197,7 @@ function initMobilePager(){
     e.preventDefault();
     const current = tabs.findIndex(b => b.getAttribute('aria-selected')==='true');
     const next = e.key==='ArrowLeft' ? Math.max(0, current-1) : Math.min(pages.length-1, current+1);
+    scrollToTopPage();
     pages[next].scrollIntoView({behavior:'smooth', inline:'start'});
   });
 }
@@ -1205,7 +1211,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const themeBtn = $("#themeToggle");
   themeBtn.addEventListener("click", ()=>{
     const cur = document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", cur);
+    document.documentElement.setAttribute('data-theme', cur);
     try{ localStorage.setItem(THEME_KEY, cur);}catch{}
     themeBtn.querySelector(".mi").textContent = (cur==="light" ? "light_mode" : "dark_mode");
     syncAppbarSpacer();
