@@ -15,8 +15,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
 <!-- Icons (ensure these files exist in /icons) -->
-<link rel="icon" href="./icons/icon-256.png.png">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png.png">
+<link rel="icon" href="./icons/icon-256.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-256.png">
 
 <!-- Load manifest only on http(s) to avoid file:// CORS errors -->
 <script>
@@ -133,6 +133,15 @@
   }
   [data-theme="light"] .card[data-section]::before{ background:#eef2ff; border-color:#c7d2fe; color:#312e81; }
 
+  /* Uniform section titles (bigger than body text, same across sections) */
+  .section-title{
+    margin:4px 0 var(--space-3) 0;
+    font-size: clamp(1.05rem, 1.2vw + .8rem, 1.25rem);
+    font-weight: 700;
+    letter-spacing: .2px;
+    line-height: 1.3;
+  }
+
   .section-form{ background:linear-gradient(180deg, color-mix(in srgb, var(--sec-form) 12%, transparent), transparent), var(--md-sys-color-surface); border-color: color-mix(in srgb, var(--sec-form) 26%, var(--md-sys-color-outline)); }
   .section-entries{ background:linear-gradient(180deg, color-mix(in srgb, var(--sec-entries) 12%, transparent), transparent), var(--md-sys-color-surface); border-color: color-mix(in srgb, var(--sec-entries) 26%, var(--md-sys-color-outline)); }
   .section-summary{ background:linear-gradient(180deg, color-mix(in srgb, var(--sec-summary) 12%, transparent), transparent), var(--md-sys-color-surface); border-color: color-mix(in srgb, var(--sec-summary) 26%, var(--md-sys-color-outline)); }
@@ -151,7 +160,7 @@
   .col-12{grid-column: span 12;}
 
   /* Inputs */
-  .field label{ display:block; font-size:.92rem; color:var(--md-sys-color-secondary); margin-bottom:6px; }
+  .field label{ display:block; font-size:.95rem; color:var(--md-sys-color-secondary); margin-bottom:6px; }
   .input, select, textarea{
     display:block; inline-size:100%; max-inline-size:100%; min-inline-size:0;
     width:100%; min-width:0;
@@ -180,13 +189,13 @@
   [data-theme="light"] .input:focus, [data-theme="light"] select:focus, [data-theme="light"] textarea:focus{ background:#ffffff; }
   .error{ border-color:var(--md-sys-color-error) !important; box-shadow:0 0 0 3px color-mix(in srgb, var(--md-sys-color-error) 28%, transparent) !important; background:#261217 !important; }
 
-  /* Buttons */
+  /* Buttons: uniform size/alignment */
   .btn{
     display:inline-flex; align-items:center; gap:8px; justify-content:center;
     border:1px solid var(--md-sys-color-outline); color:var(--md-sys-color-on-surface); background:#0f1a2e;
-    border-radius:999px; padding:10px 14px; min-height:46px; cursor:pointer; min-width:0;
+    border-radius:999px; padding:10px 14px; min-height:46px; min-width:44px; cursor:pointer;
     transition:box-shadow .15s, background .15s, border-color .15s, transform .02s; user-select:none;
-    will-change:transform;
+    will-change:transform; line-height:1;
   }
   [data-theme="light"] .btn{ background:#f3f4f6; color:#111827; border-color:#e5e7eb; }
   .btn:hover{ box-shadow: var(--shadow-1); background:#12203a; }
@@ -200,7 +209,7 @@
     color:#fff; border-color:var(--md-sys-color-primary-variant);
     box-shadow:0 12px 24px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
   }
-  /* Light theme: primary button text black */
+  /* Light theme: primary button text black for readability */
   [data-theme="light"] .btn-primary{ color:#111827; }
 
   .btn-tonal{ background:#121e37; border-color:#1b2a45; color:#c7b9ff; }
@@ -257,7 +266,9 @@
 
   .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
-  /* Mobile */
+  /* Mobile pager: horizontal pages via scroll-snap */
+  .pager-nav{ display:none; }
+
   @media (max-width: 1100px){
     .col-6,.col-4,.col-3,.col-8{grid-column:span 12;}
     .row{ grid-template-columns: repeat(6,1fr); }
@@ -267,11 +278,51 @@
     .btn{ min-height:46px; }
     th,td{ padding:10px; }
     .title h1{ font-size:1.1rem; max-width:58vw; }
-    .actions{
-      overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; scrollbar-width:none;
+
+    /* Activate pager layout only on mobile */
+    body.pager-active .wrap{
+      display:flex;
+      flex-direction:row;
+      gap:0;
+      overflow-x:auto;
+      scroll-snap-type:x mandatory;
+      scroll-behavior:smooth;
+      padding-left:0;
+      padding-right:0;
+      -webkit-overflow-scrolling: touch;
     }
-    .actions::-webkit-scrollbar{ display:none; }
-    .actions > *{ flex:0 0 auto; }
+    /* Each section becomes a full-width page */
+    body.pager-active .wrap > section.card{
+      flex:0 0 100%;
+      scroll-snap-align:start;
+      border-radius:0;
+      margin:0;
+      min-height:calc(100dvh - var(--appbar-min-h) - 12px);
+      padding: var(--space-4) var(--space-3) var(--space-4);
+    }
+
+    /* Small sticky tabs under the fixed header */
+    .pager-nav{
+      position:sticky;
+      top:calc(var(--appbar-min-h));
+      z-index:5;
+      display:flex;
+      gap:8px;
+      padding:8px var(--space-3);
+      background: linear-gradient(180deg, rgba(0,0,0,.06), transparent);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+    .pager-nav button{ flex:1; min-width:0; }
+    .pager-nav [aria-selected="true"]{
+      outline:2px solid color-mix(in srgb, var(--md-sys-color-primary) 55%, transparent);
+    }
+
+    /* Hide horizontal scrollbar cosmetics */
+    .wrap::-webkit-scrollbar{ display:none; }
+
+    /* Keep inner horizontal scrollers (like your table) from “chaining” to page swipe */
+    .table-wrap{ overscroll-behavior-inline: contain; }
   }
 
   /* CLS guards for dynamic areas */
@@ -296,7 +347,7 @@
   <div class="appbar" id="appbar">
     <div class="inner">
       <div class="title">
-        <img class="logo-img" src="./icons/icon-256.png.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
+        <img class="logo-img" src="./icons/icon-256.png" alt="Medication Tracker" width="28" height="28" decoding="async" fetchpriority="high" />
         <h1>Medication Tracker</h1>
       </div>
       <div class="actions">
@@ -318,9 +369,24 @@
   <!-- Reserve space to avoid content jump under fixed header -->
   <div id="appbar-spacer" aria-hidden="true"></div>
 
+  <!-- Mobile pager tabs -->
+  <nav id="pagerNav" class="pager-nav" aria-label="Pages">
+    <button class="btn btn-chip" data-target="#page-log" role="tab" aria-selected="true">
+      <span class="mi" aria-hidden="true">edit_note</span>Log
+    </button>
+    <button class="btn btn-chip" data-target="#page-entries" role="tab" aria-selected="false">
+      <span class="mi" aria-hidden="true">table</span>Entries
+    </button>
+    <button class="btn btn-chip" data-target="#page-summary" role="tab" aria-selected="false">
+      <span class="mi" aria-hidden="true">summarize</span>Summary
+    </button>
+  </nav>
+
   <main class="wrap">
     <!-- Form -->
-    <section class="card section-form" aria-label="Log a new session" data-section="Log Session">
+    <section class="card section-form" id="page-log" aria-label="Log a new session" data-section="Log Session">
+      <h2 class="section-title">Log Session</h2>
+
       <div class="controls" style="justify-content:space-between; margin-bottom:6px;">
         <div class="controls" style="gap:8px;">
           <label class="btn btn-chip" title="Warn on near-duplicates"><input type="checkbox" id="dupPrevent" style="margin-right:8px;">Duplicate prevention</label>
@@ -352,14 +418,14 @@
             <label for="thc_cbd">THC/CBD</label>
             <input class="input" type="text" id="thc_cbd" placeholder="THC 18% / CBD 1%" required autocomplete="off">
           </div>
-          <div class="col-4 field">
-            <label for="form">Form</label>
-            <select class="input" id="form" required>
-              <option value="" disabled selected>Select…</option>
-              <option>Flower</option><option>Vape</option><option>Oil</option>
-              <option>Tincture</option><option>Edible</option><option>Topical</option>
-            </select>
-          </div>
+            <div class="col-4 field">
+              <label for="form">Form</label>
+              <select class="input" id="form" required>
+                <option value="" disabled selected>Select…</option>
+                <option>Flower</option><option>Vape</option><option>Oil</option>
+                <option>Tincture</option><option>Edible</option><option>Topical</option>
+              </select>
+            </div>
 
           <div class="col-4 field">
             <label for="method">Method</label>
@@ -418,7 +484,9 @@
     </section>
 
     <!-- Entries -->
-    <section class="card section-entries" aria-label="Entries" data-section="Entries" style="margin-top:16px;">
+    <section class="card section-entries" id="page-entries" aria-label="Entries" data-section="Entries" style="margin-top:16px;">
+      <h2 class="section-title">Entries</h2>
+
       <div class="controls" style="margin-bottom:10px; width:100%;">
         <input id="search" class="input" style="flex:1; min-width:220px;" placeholder="Search strain, reason, notes…" />
 
@@ -479,7 +547,9 @@
     </section>
 
     <!-- Doctor Summary -->
-    <section class="card section-summary" aria-label="Doctor Summary" data-section="Doctor Summary" style="margin-top:16px;">
+    <section class="card section-summary" id="page-summary" aria-label="Doctor Summary" data-section="Doctor Summary" style="margin-top:16px;">
+      <h2 class="section-title">Doctor Summary</h2>
+
       <div class="controls" style="margin-bottom:10px;">
         <strong>Doctor Summary:</strong>
         <label for="summaryRange">Range</label>
@@ -997,13 +1067,14 @@ function generateDoctorSummary(range="30"){
   return lines.join("\n");
 }
 
-/* ---------- APP BAR: spacer sync + auto-hide (transform only, no bounce) ---------- */
+/* ---------- APP BAR: spacer sync ---------- */
 function syncAppbarSpacer(){
   const inner = document.querySelector('.appbar .inner');
   const spacer = document.getElementById('appbar-spacer');
   if (!inner || !spacer) return;
   spacer.style.height = inner.offsetHeight + 'px'; // constant height
 }
+
 /* ---------- APP BAR: auto-hide shows ONLY on scroll-up (never auto-show at bottom) ---------- */
 (function initAutoHideHeader(){
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1012,9 +1083,9 @@ function syncAppbarSpacer(){
   let hidden = false;
   let ticking = false;
 
-  const BOTTOM_BUFFER = 160;    // px from the very bottom that we treat as "bottom zone"
-  const SHOW_THRESHOLD = 14;    // how much upward movement to show the bar
-  const HIDE_THRESHOLD = 10;    // how much downward movement to hide the bar
+  const BOTTOM_BUFFER = 160;    // px from the very bottom considered a "bottom zone"
+  const SHOW_THRESHOLD = 14;    // upward movement to show the bar
+  const HIDE_THRESHOLD = 10;    // downward movement to hide the bar
 
   function nearBottom(y){
     const max = Math.max(
@@ -1036,10 +1107,8 @@ function syncAppbarSpacer(){
       // At the very top: show it
       showBar();
     } else if (nearBottom(y)){
-      // In the bottom zone: NEVER force-show (prevents the header popping back in)
-      // Still allow hiding if the user pushes further down
+      // In the bottom zone: NEVER force-show; allow hide if still moving down
       if (delta > HIDE_THRESHOLD) hideBar();
-      // Ignore small upward rubber-band bounces here (do not show)
     } else {
       // Normal behavior: hide on scroll-down, show on scroll-up
       if (delta > HIDE_THRESHOLD) {
@@ -1059,7 +1128,6 @@ function syncAppbarSpacer(){
     }
   }
 
-  // Keep the spacer height in sync so layout never shifts
   window.addEventListener('load', syncAppbarSpacer, { once:true });
   window.addEventListener('resize', syncAppbarSpacer, { passive:true });
   window.addEventListener('orientationchange', syncAppbarSpacer, { passive:true });
@@ -1072,6 +1140,61 @@ function syncAppbarSpacer(){
   }
 })();
 
+/* ---------- Mobile Pager ---------- */
+function initMobilePager(){
+  const container = document.querySelector('main.wrap');
+  const pages = ['#page-log', '#page-entries', '#page-summary']
+    .map(sel => document.querySelector(sel))
+    .filter(Boolean);
+  const tabs = Array.from(document.querySelectorAll('#pagerNav [data-target]'));
+  if (!container || !pages.length) return;
+
+  const mq = window.matchMedia('(max-width: 640px)');
+
+  function setPagerActive(on){
+    document.body.classList.toggle('pager-active', !!on);
+  }
+
+  // Apply now and on resize
+  setPagerActive(mq.matches);
+  mq.addEventListener('change', e => setPagerActive(e.matches));
+
+  // Clicking a tab scrolls to that page
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const target = document.querySelector(btn.dataset.target);
+      if (target){
+        target.scrollIntoView({behavior:'smooth', inline:'start', block:'nearest'});
+      }
+    });
+  });
+
+  // Observe which page is most visible to update aria-selected
+  const io = new IntersectionObserver((entries)=>{
+    let best = null, bestRatio = 0;
+    entries.forEach(en=>{
+      if (en.isIntersecting && en.intersectionRatio > bestRatio){
+        best = en.target; bestRatio = en.intersectionRatio;
+      }
+    });
+    if (best){
+      const id = '#'+best.id;
+      tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.target===id)));
+    }
+  }, { root: container, threshold:[0.5, 0.75, 1] });
+
+  pages.forEach(p => io.observe(p));
+
+  // Optional: keyboard left/right to switch pages when container is focused
+  container.setAttribute('tabindex','0');
+  container.addEventListener('keydown', (e)=>{
+    if (e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
+    e.preventDefault();
+    const current = tabs.findIndex(b => b.getAttribute('aria-selected')==='true');
+    const next = e.key==='ArrowLeft' ? Math.max(0, current-1) : Math.min(pages.length-1, current+1);
+    pages[next].scrollIntoView({behavior:'smooth', inline:'start'});
+  });
+}
 
 /* ---------- Init & Events ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
@@ -1111,6 +1234,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   renderPinnedTemplates();
   renderTable();
   syncAppbarSpacer();
+  initMobilePager();
 
   // Save / Update
   $("#saveBtn").addEventListener("click", ()=>{
